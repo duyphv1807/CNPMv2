@@ -1,26 +1,23 @@
 import flet as ft
-# Giả sử COLORS đã có sẵn, nếu lỗi hãy thay COLORS["bg"] bằng "#F5F5F5"
-try:
-    from Frontend.Style import COLORS
-except:
-    COLORS = {"bg": "#F5F5F5", "border": "#B3E5E5", "text": "#000000"}
+from Frontend.Style import COLORS
 
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
             route="/Dashboard",
             bgcolor=COLORS["bg"],
-            padding=0, # View chính để padding 0 để Nav Bar sát cạnh
+            padding=0,
         )
         user_info = page.session.store.get("user_data")
-
-        # Kiểm tra nếu có dữ liệu thì lấy FullName, không thì để Guest
         display_name = user_info["FullName"] if user_info else "Guest"
-        self.user_id = user_info["UserID"] if user_info else None
 
+        # --- STATE ---
         self.rental_mode = "self-driving"
         self.selected_category = "Car"
         self.category_buttons = {}
+
+        # KHỞI TẠO KHUNG HIỂN THỊ SẢN PHẨM (Nằm trong vùng cuộn riêng)
+        self.product_display = ft.Column(spacing=15)
 
         # --- NAVIGATION BAR ---
         self.navigation_bar_custom = ft.NavigationBar(
@@ -32,78 +29,112 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
-            on_change=self.on_nav_change,
             height=65
         )
 
-        # --- UI COMPONENTS ---
+        # 1. Header
         self.header = ft.Container(
             padding=ft.Padding(20, 40, 20, 10),
             content=ft.Row([
-                ft.Icon(icon=ft.Icons.ACCOUNT_CIRCLE, size=45),
-                ft.Text(f"Welcome to PiCar! {display_name}", size=22, weight=ft.FontWeight.BOLD, color=COLORS["primary"]),
+                ft.Icon(icon=ft.Icons.ACCOUNT_CIRCLE, size=45, color=COLORS["primary"]),
+                ft.Column([
+                    ft.Text("Welcome to PiCar!", size=14, color=COLORS["muted"]),
+                    ft.Text(display_name, size=20, weight=ft.FontWeight.BOLD, color=COLORS["primary"]),
+                ], spacing=0)
             ])
         )
 
-        self.mode_toggle = ft.Container(
-            padding=ft.Padding(20, 0, 20, 0),
-            content=ft.Row([
-                self.create_mode_btn("🚗 self-driving", "self-driving", active=True),
-                self.create_mode_btn("🚖 with driver", "with-driver", active=False),
-            ], spacing=10)
-        )
-
-        # Main Column chứa mọi thứ
-        self.main_content = ft.Column(
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                self.header,
-                self.mode_toggle,
-                # Info Boxes
-                ft.Container(
-                    padding=ft.Padding(20, 15, 20, 0),
-                    content=ft.Column([
-                        self.create_info_box(ft.Icons.LOCATION_ON, "location", "TP.Ho Chi Minh, Viet Nam"),
-                        self.create_info_box(ft.Icons.CALENDAR_MONTH, "rental period", "12:00, 01/01 - 20:00, 02/01"),
-                    ], spacing=10,horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
-                ),
-                # Categories (5 nút chung 1 hàng bọc trong wrap)
-                ft.Container(
-                    padding=ft.Padding(10, 20, 10, 20),
-                    content=ft.Row(
-                        wrap=True,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=10,
-                        run_spacing=15,
+        # 2. Booking Card
+        self.booking_card = ft.Container(
+            margin=ft.Margin.only(top=5, left=20, right=20, bottom=10),
+            bgcolor="#FFFFFF",
+            border_radius=20,
+            shadow=ft.BoxShadow(blur_radius=15, color=ft.Colors.with_opacity(0.1, "black")),
+            content=ft.Column(
+                spacing=0,
+                controls=[
+                    ft.Row(
+                        spacing=0,
                         controls=[
-                            self.create_vehicle_button("🚲", "Bike"),
-                            self.create_vehicle_button("🏍️", "Motorbike"),
-                            self.create_vehicle_button("⛵", "Boat"),
-                            self.create_vehicle_button("🚗", "Car"),
-                            self.create_vehicle_button("🚚", "Truck"),
+                            self.create_mode_tab("Xe tự lái", "self-driving", ft.Icons.PERSON_OUTLINED, active=True),
+                            self.create_mode_tab("Xe có tài xế", "with-driver", ft.Icons.DIRECTIONS_CAR_OUTLINED,
+                                                 active=False),
                         ]
+                    ),
+                    ft.Container(
+                        padding=20,
+                        content=ft.Column(
+                            spacing=8,
+                            controls=[
+                                self.create_info_row(ft.Icons.LOCATION_ON_OUTLINED, "Địa điểm",
+                                                     "TP. Hồ Chí Minh, Việt Nam"),
+                                self.create_info_row(ft.Icons.CALENDAR_MONTH_OUTLINED, "Thời gian thuê",
+                                                     "12:00, 21/01/2026 - 12:00, 22/01/2026"),
+                                ft.Container(height=5),
+                                ft.FilledButton(
+                                    content=ft.Text("Đặt xe ngay", size=16, weight=ft.FontWeight.BOLD, color="#FFFFFF"),
+                                    width=float("inf"), height=45,
+                                    style=ft.ButtonStyle(bgcolor=COLORS["primary"],
+                                                         shape=ft.RoundedRectangleBorder(radius=12)),
+                                    on_click=lambda _: print("Booking...")
+                                )
+                            ]
+                        )
                     )
-                ),
-                ft.Container(height=100)
-            ]
+                ]
+            )
         )
 
-        # --- LAYOUT WRAPPER (Sửa lỗi out screen) ---
+        # 3. Category Section (Đã fix theo kiểu Tab viền đen)
+        # Lưu ý: Truyền tên Category trực tiếp vào hàm mới
+        self.category_section = ft.Container(
+            padding=ft.Padding(20, 0, 20, 5),
+            content=ft.Row(
+                scroll=ft.ScrollMode.ADAPTIVE,
+                spacing=10,
+                controls=[
+                    self.create_vehicle_button("Car"),
+                    self.create_vehicle_button("Motorbike"),
+                    self.create_vehicle_button("Bike"),
+                    self.create_vehicle_button("Boat"),
+                    self.create_vehicle_button("Truck"),
+                ]
+            )
+        )
+
+        # --- LAYOUT WRAPPER (Fix vùng cuộn sản phẩm) ---
         self.controls = [
             ft.Row(
                 expand=True,
-                alignment=ft.MainAxisAlignment.CENTER,  # Căn giữa khối 380px vào màn hình PC
+                alignment=ft.MainAxisAlignment.CENTER,
                 controls=[
                     ft.Container(
-                        width=380,  # Khóa chiều ngang
+                        width=380,
                         bgcolor=COLORS["bg"],
                         content=ft.Column(
                             spacing=0,
                             controls=[
-                                ft.Container(content=self.main_content, expand=True),  # Phần nội dung cuộn
-                                self.navigation_bar_custom  # Thanh điều hướng nằm dưới cùng khối 380px
+                                # PHẦN CỐ ĐỊNH (Sticky Top)
+                                self.header,
+                                self.booking_card,
+                                ft.Container(
+                                    padding=ft.Padding.only(left=25, bottom=10),
+                                    content=ft.Text("Danh mục xe", weight=ft.FontWeight.BOLD, size=16,color = COLORS["primary"]),
+                                ),
+                                self.category_section,
+
+                                # PHẦN CUỘN SẢN PHẨM (Scrollable Area)
+                                ft.Container(
+                                    padding=ft.Padding.only(left=20, right=20, top=1, bottom=20),
+                                    expand=True,  # Lấy phần diện tích còn lại
+                                    content=ft.Column(
+                                        controls=[self.product_display],
+                                        scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
+                                    )
+                                ),
+
+                                # PHẦN CỐ ĐỊNH (Bottom Nav)
+                                self.navigation_bar_custom
                             ]
                         )
                     )
@@ -111,72 +142,137 @@ class DashboardScreen(ft.View):
             )
         ]
 
+        # Load dữ liệu mặc định
+        self.update_product_list("Car")
+
     # --- HELPER METHODS ---
-    def create_mode_btn(self, text, mode, active):
-        btn = ft.Container(
-            content=ft.Text(text, size=12, weight=ft.FontWeight.BOLD),
-            bgcolor="#B3E5E5" if active else "#E0F7F7",
-            expand=1,
-            height=45,
-            border_radius=8,
-            alignment=ft.Alignment.CENTER,
+
+    def create_mode_tab(self, text, mode, icon, active):
+        is_left = (mode == "self-driving")
+        icon_ctrl = ft.Icon(icon, size=18, color="#FFFFFF" if active else COLORS["primary"])
+        text_ctrl = ft.Text(text, size=13, weight=ft.FontWeight.BOLD if active else ft.FontWeight.NORMAL,
+                            color="#FFFFFF" if active else COLORS["primary"])
+
+        tab = ft.Container(
+            content=ft.Row([icon_ctrl, text_ctrl], alignment=ft.MainAxisAlignment.CENTER),
+            bgcolor=COLORS["primary"] if active else "#F5F5F5",
+            expand=True, height=40,
+            border_radius=ft.BorderRadius.only(top_left=20 if is_left else 0, top_right=0 if is_left else 20),
             on_click=lambda _: self.toggle_mode(mode)
         )
-        if mode == "self-driving": self.btn_self = btn
-        else: self.btn_driver = btn
-        return btn
+        if is_left:
+            self.tab_self_container, self.tab_self_items = tab, [icon_ctrl, text_ctrl]
+        else:
+            self.tab_driver_container, self.tab_driver_items = tab, [icon_ctrl, text_ctrl]
+        return tab
 
     def toggle_mode(self, mode):
         self.rental_mode = mode
-        self.btn_self.bgcolor = "#B3E5E5" if mode == "self-driving" else "#E0F7F7"
-        self.btn_driver.bgcolor = "#B3E5E5" if mode == "with-driver" else "#E0F7F7"
+        # Logic update màu sắc Tab (giữ nguyên của bạn)
+        for t, items, active in [(self.tab_self_container, self.tab_self_items, mode == "self-driving"),
+                                 (self.tab_driver_container, self.tab_driver_items, mode == "with-driver")]:
+            t.bgcolor = COLORS["primary"] if active else "#F5F5F5"
+            items[0].color = items[1].color = "#FFFFFF" if active else COLORS["primary"]
         self.page.update()
 
-    def create_info_box(self, icon_data, title, subtitle):
-        return ft.Container(
-            padding=15,
-            bgcolor="#E0F7F7",
-            border=ft.Border.all(1, "#B3E5E5"),
-            border_radius=10,
-            content=ft.Row([
-                ft.Icon(icon=icon_data, color="black", size=30),
-                ft.Column([
-                    ft.Text(title, size=12, color="#666666"),
-                    ft.Text(subtitle, size=14, weight=ft.FontWeight.BOLD, color="black"),
-                ], spacing=2)
-            ])
+    def create_info_row(self, icon, label, value):
+        return ft.Column([
+            ft.Row([ft.Icon(icon, size=18, color=COLORS["muted"]), ft.Text(label, color=COLORS["muted"], size=12)],
+                   spacing=5),
+            ft.Text(value, size=14, weight=ft.FontWeight.BOLD, color="#333333"),
+            ft.Divider(height=1, color="#EEEEEE")
+        ], spacing=3)
+
+    def create_vehicle_button(self, name):
+        is_selected = (name == self.selected_category)
+        name_txt = ft.Text(
+            name,
+            size=14,
+            weight=ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400,
+            color="black",
+            no_wrap=True, # Đảm bảo chữ không bị xuống dòng làm hỏng layout
         )
 
-    def create_vehicle_button(self, emoji, name):
-        is_selected = (name == self.selected_category)
         btn = ft.Container(
-            content=ft.Column([
-                ft.Text(emoji, size=25),
-                ft.Text(name, size=10.5, weight=ft.FontWeight.BOLD),
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER,),
-            width=60,
-            height=70,
-            bgcolor="#4DB6AC" if is_selected else "#B3E5E5",
-            border_radius=12,
+            content=name_txt,
+            padding=ft.Padding.symmetric(vertical=8, horizontal=12),
+            border=ft.Border.all(1, "black" if is_selected else "#E0E0E0"),
+            border_radius=12, # Bo góc mềm mại hơn một chút
+            bgcolor="white",
             animate=ft.Animation(300, ft.AnimationCurve.DECELERATE),
             on_click=lambda _: self.select_category(name)
         )
-        self.category_buttons[name] = btn
+        self.category_buttons[name] = (btn, name_txt)
         return btn
 
     def select_category(self, name):
-        for k, v in self.category_buttons.items():
-            v.bgcolor = "#B3E5E5"
-        self.selected_category = name
-        self.category_buttons[name].bgcolor = "#4DB6AC"
+        self.selected_category = name  # Cập nhật trạng thái hiện tại
+        for cat_name, (container, text_obj) in self.category_buttons.items():
+            active = (cat_name == name)
+            # Cập nhật style cho Container
+            container.border = ft.border.all(2, "black" if active else "#E0E0E0")
+            # Cập nhật style cho Text
+            text_obj.weight = ft.FontWeight.W_600 if active else ft.FontWeight.W_400
+
+        self.update_product_list(name)
         self.page.update()
 
-    def on_nav_change(self, e):
-        # Bạn sẽ viết logic chuyển route ở đây
-        pass
+    def update_product_list(self, category_name):
+        products = {
+            "Car": [
+                ("VinFast VF8", "1.2tr/ngày"),
+                ("Toyota Vios", "800k/ngày"),
+                ("Hyundai Accent", "750k/ngày"),
+                ("Mazda 3", "900k/ngày"),
+                ("Honda Civic", "1tr/ngày"),
+                ("Kia Cerato", "850k/ngày"),
+            ],
+            "Motorbike": [("Honda SH", "350k/ngày"), ("Air Blade", "150k/ngày")],
+            "Bike": [("Xe đạp địa hình", "50k/ngày")],
+        }
 
-# --- MAIN RUNNER (Fix lỗi không hiển thị) ---
-def main(page: ft.Page):
+        self.product_display.controls.clear()
+        # Tăng spacing giữa các Card sản phẩm
+        self.product_display.spacing = 8
+
+        items = products.get(category_name, [("Sắp có xe mới...", "")])
+
+        for title, price in items:
+            self.product_display.controls.append(
+                ft.Container(
+                    padding=15,
+                    bgcolor="#FFFFFF",
+                    border_radius=16,
+                    # Thêm margin nhẹ để bóng đổ (shadow) không bị cắt mất bởi Container cha
+                    margin=ft.Margin.only(bottom=2),
+                    shadow=ft.BoxShadow(
+                        blur_radius=10,
+                        color=ft.Colors.with_opacity(0.05, "black"),
+                        offset=ft.Offset(0, 4)  # Đổ bóng xuống dưới tạo độ sâu
+                    ),
+                    content=ft.Row([
+                        ft.Container(
+                            content=ft.Icon(ft.Icons.DIRECTIONS_CAR_ROUNDED, color=COLORS["primary"], size=28),
+                            bgcolor="#F8F9FA",
+                            padding=6,
+                            border_radius=8
+                        ),
+                        ft.Column([
+                            ft.Text(title, weight=ft.FontWeight.BOLD, size=15, color="#1A1A1A"),
+                            ft.Text(price, color=COLORS["muted"], size=13),
+                        ], expand=True, spacing=4),
+                        ft.IconButton(
+                            icon=ft.Icons.ARROW_FORWARD_IOS,
+                            icon_size=14,
+                            icon_color="#CCCCCC"
+                        )
+                    ])
+                )
+            )
+
+# --- Chạy main ---
+async def main(page: ft.Page):
+
     page.views.append(DashboardScreen(page))
     page.update()
 

@@ -31,7 +31,7 @@ class AuthService:
             return await AuthService.send_sms_otp(contact, otp_code)
 
     @staticmethod
-    async def send_email_otp(email, code, sender = "picathelocal@gmail.com",sender_password = "obbtrexpkbkmclna"):
+    async def send_email_otp(email, code, sender = "picathelocal@gmail.com",sender_password = "obbt rexp kbkm clna"):
         try:
             # 1. Thiết lập nội dung Email
             msg = MIMEMultipart()
