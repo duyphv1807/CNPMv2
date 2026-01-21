@@ -1,11 +1,12 @@
 import flet as ft
 from Frontend.Style import COLORS, FONTS, PRIMARY_BUTTON_STYLE
 from Backend.ExcuteDatabase import supabase
+import bcrypt
 
 class LoginScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
-            route="/login",
+            route="/Login",
             bgcolor=COLORS["bg"],
             padding=20,
             vertical_alignment=ft.MainAxisAlignment.CENTER,
@@ -168,7 +169,7 @@ class LoginScreen(ft.View):
             # 3. Truy vấn Database (Lưu ý: "Email" phải khớp với tên cột trong SQL)
             response = supabase.table("User_Admin") \
                 .select("*") \
-                .or_(f"Email.eq.{account_val}, PhoneNumber.eq.{account_val}") \
+                .or_(f"Email.eq.{account_val},PhoneNumber.eq.{account_val}") \
                 .execute()
 
             # 4. Kiểm tra tài khoản tồn tại
@@ -179,7 +180,12 @@ class LoginScreen(ft.View):
             # 5. Kiểm tra mật khẩu (Giả sử mật khẩu cột tên là "Password")
             user_data = response.data[0]
 
-            if user_data["Password"] != password_val:
+            hashed_password = user_data["Password"]
+
+            if not bcrypt.checkpw(
+                    password_val.encode("utf-8"),
+                    hashed_password.encode("utf-8")
+            ):
                 self.show_error_box(["Mật khẩu không chính xác. Vui lòng thử lại"])
                 return
 

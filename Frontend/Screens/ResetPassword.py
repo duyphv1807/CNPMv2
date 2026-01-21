@@ -1,6 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, PRIMARY_BUTTON_STYLE
-
+from Backend.Services.AuthService import AuthService
 
 class ResetPasswordScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -96,10 +96,18 @@ class ResetPasswordScreen(ft.View):
             self.page.go("/ForgotPassword")
             return
 
-        print("Reset password cho:", contact)
+        try:
+            result = await AuthService.update_password(contact, pwd)
 
-        self.show_snack("Đặt lại mật khẩu thành công 🎉")
-        self.page.go("/Login")
+            if not result:
+                self.show_snack("Không thể đặt lại mật khẩu")
+                return
+
+            self.show_snack("Đặt lại mật khẩu thành công 🎉")
+            self.page.go("/Login")
+
+        except Exception as ex:
+            self.show_snack(f"Lỗi: {ex}")
 
     def show_snack(self, message):
         self.page.snack_bar = ft.SnackBar(

@@ -5,7 +5,7 @@ from Frontend.Screens.Register2 import RegisterScreen2
 from Frontend.Screens.Register3 import RegisterScreen3
 from Frontend.Screens.Dashboard import DashboardScreen
 from Frontend.Screens.ForgotPassword import ForgotPasswordScreen
-from Frontend.Screens.VerifyOTP import VerifyOTPScreen   # ❌ THIẾU
+from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
 
 async def main(page: ft.Page):
@@ -43,12 +43,12 @@ async def main(page: ft.Page):
 
     page.on_route_change = route_change
 
-    # Sử dụng push_route chuẩn (không cần _async ở bản 0.80.2)
-    await page.push_route("/Login")
-
     page.on_route_change = route_change
     # page.go("/ForgotPassword")
     await page.push_route("/ForgotPassword")
+
+    # Sử dụng push_route chuẩn (không cần _async ở bản 0.80.2)
+    await page.push_route("/Login")
 
 if __name__ == "__main__":
     # Dùng ft.run để xóa cảnh báo Deprecated

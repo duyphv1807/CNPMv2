@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
+import bcrypt
 
 class AuthService:
     @staticmethod
@@ -32,7 +33,7 @@ class AuthService:
             return await AuthService.send_sms_otp(contact, otp_code)
 
     @staticmethod
-    async def send_email_otp(email, code, sender = "nguyentruong05070600@gmail.com",sender_password = "heih lcbh jjoi yxow"):
+    async def send_email_otp(email, code, sender = "picarthelocal@gmail.com",sender_password = "sxye qwfm hwyp pigw"):
 
         try:
             # 1. Thiết lập nội dung Email
@@ -99,14 +100,21 @@ class AuthService:
     #     print(f"[MOCK SMS] OTP gửi tới {phone}: {code}")
     #     return True, "OTP mocked (DEV MODE)"
 
-
     @staticmethod
     async def update_password(contact, new_password):
         from Backend.ExcuteDatabase import supabase
 
+        # 🔐 HASH PASSWORD
+        hashed = bcrypt.hashpw(
+            new_password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
         result = supabase.table("User_Admin") \
-            .update({"Password": new_password}) \
+            .update({"Password": hashed}) \
             .or_(f"Email.eq.{contact},PhoneNumber.eq.{contact}") \
             .execute()
 
         return bool(result.data)
+
+
