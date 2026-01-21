@@ -398,6 +398,70 @@ def save_driving_license_data(license_id, front_source, back_source, license_cla
         print(f"--> [ERROR] Save Driving License failed: {e}")
         return None
 
+def get_current_user():
+    """
+    Lấy thông tin user hiện tại.
+    Tạm thời lấy USER đầu tiên (đúng chuẩn đồ án, chưa có session/login).
+    """
+    try:
+        response = (
+            supabase.table("User_Admin")
+            .select("UserID, FullName, DateOfBirth, DrivingLicense, Email, Avatar")
+            .eq("ClassifyUser", "USER")
+            .limit(1)
+            .execute()
+        )
+
+        if response.data:
+            return response.data[0]
+        return None
+
+    except Exception as e:
+        print(f"[ERROR] get_current_user: {e}")
+        return None
+
+
+def update_user_profile(user_id, data: dict):
+    """
+    Cập nhật thông tin người dùng:
+    - Tên
+    - Ngày sinh
+    - GPLX
+    - Email
+    - Ảnh đại diện
+    """
+    try:
+        payload = {}
+
+        # Chỉ update field nào có truyền lên
+        if "FullName" in data:
+            payload["FullName"] = data["FullName"]
+
+        if "DateOfBirth" in data:
+            payload["DateOfBirth"] = data["DateOfBirth"]
+
+        if "DrivingLicense" in data:
+            payload["DrivingLicense"] = data["DrivingLicense"]
+
+        if "Email" in data:
+            payload["Email"] = data["Email"]
+
+        if "Avatar" in data:
+            payload["Avatar"] = data["Avatar"]
+
+        if not payload:
+            return False
+
+        supabase.table("User_Admin") \
+            .update(payload) \
+            .eq("UserID", user_id) \
+            .execute()
+
+        return True
+
+    except Exception as e:
+        print(f"[ERROR] update_user_profile: {e}")
+        return False
 def upload_image_to_storage(image_source, filename, bucket="DrivingLicense"):
     """
     Đẩy ảnh lên Supabase Storage và trả về Public URL.
@@ -432,6 +496,25 @@ def upload_image_to_storage(image_source, filename, bucket="DrivingLicense"):
     except Exception as e:
         print(f"Lỗi upload: {e}")
         return None
+
+
+def change_password(user_id, old_password, new_password):
+    try:
+        # 1. Truy vấn user từ Supabase/Database
+        # Giả sử bạn dùng Supabase
+        response = supabase.table("User_Admin").select("*").eq("id", user_id).execute()
+
+        if response.data:
+            user = response.data[0]
+            # 2. Kiểm tra mật khẩu cũ có khớp không
+            if user.get("Password") == old_password:
+                # 3. Cập nhật mật khẩu mới
+                supabase.table("User_Admin").update({"Password": new_password}).eq("id", user_id).execute()
+                return True
+        return False
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
 
 if __name__ == "__main__":
     path = r"C:\Users\ASUS\OneDrive\Máy tính\bài tập\test\a1.jpg"

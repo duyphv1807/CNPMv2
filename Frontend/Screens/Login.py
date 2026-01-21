@@ -185,7 +185,7 @@ class LoginScreen(ft.View):
 
             # 6. Đăng nhập thành công
             print(f"Chào mừng {user_data['FullName']}!")
-            self.page.session.store.set("user", user_data)
+            self.page.session.store.set("user_data", user_data)
             self.page.go("/Dashboard")
 
         except Exception as ex:
