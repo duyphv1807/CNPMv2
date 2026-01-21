@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
+
 class AuthService:
     @staticmethod
     async def request_otp_reset_password(contact, otp_code):
@@ -31,7 +32,8 @@ class AuthService:
             return await AuthService.send_sms_otp(contact, otp_code)
 
     @staticmethod
-    async def send_email_otp(email, code, sender = "picathelocal@gmail.com",sender_password = "obbt rexp kbkm clna"):
+    async def send_email_otp(email, code, sender = "nguyentruong05070600@gmail.com",sender_password = "heih lcbh jjoi yxow"):
+
         try:
             # 1. Thiết lập nội dung Email
             msg = MIMEMultipart()
@@ -70,7 +72,7 @@ class AuthService:
 
     @staticmethod
     async def send_sms_otp(phone, code):
-        access_token = "fLzZo_NW5AwDOqnAQeCIrpzMOMyuIJQQv2_your_actual_token_here"
+        access_token = "fLzZo_NW5AwDOqnAQeCIrpzMOMyuIJQQ"
         content = f"Mã OTP PiCar của bạn là {code}. Có hiệu lực trong 6 phút. Vui lòng không chia sẽ mã này."
         # Endpoint API của SpeedSMS
         url = "https://api.speedsms.vn/index.php/sms/send"
@@ -78,7 +80,7 @@ class AuthService:
             "access-token": access_token,
             "to": phone,
             "content": content,
-            "type": 2  # Type 2: Tin nhắn CSKH/OTP (Ưu tiên gửi nhanh)
+            "type": 3  # Type 2: Tin nhắn CSKH/OTP (Ưu tiên gửi nhanh)
         }
         try:
             response = requests.get(url, params=params)
@@ -91,3 +93,20 @@ class AuthService:
                 return False, f"SpeedSMS báo lỗi: {data.get('message')}"
         except Exception as e:
             return False, f"Lỗi kết nối API: {str(e)}"
+
+    # @staticmethod
+    # async def send_sms_otp(phone, code):
+    #     print(f"[MOCK SMS] OTP gửi tới {phone}: {code}")
+    #     return True, "OTP mocked (DEV MODE)"
+
+
+    @staticmethod
+    async def update_password(contact, new_password):
+        from Backend.ExcuteDatabase import supabase
+
+        result = supabase.table("User_Admin") \
+            .update({"Password": new_password}) \
+            .or_(f"Email.eq.{contact},PhoneNumber.eq.{contact}") \
+            .execute()
+
+        return bool(result.data)

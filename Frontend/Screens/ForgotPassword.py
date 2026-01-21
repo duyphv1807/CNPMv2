@@ -16,7 +16,7 @@ class ForgotPasswordScreen(ft.View):
 
         # --- INPUT FIELD ---
         self.contact_input = ft.TextField(
-            label="Email or Phone number",
+            label="Email ",
             label_style=ft.TextStyle(color=COLORS["muted"], weight=ft.FontWeight.BOLD),
             border_color=COLORS["border"],
             focused_border_color=COLORS["primary"],
@@ -70,7 +70,7 @@ class ForgotPasswordScreen(ft.View):
                                                 width=340  # Giúp text_align có tác dụng
                                             ),
                                             ft.Text(
-                                                value="Vui lòng nhập Email hoặc SĐT để nhận mã OTP khôi phục mật khẩu.",
+                                                value="Vui lòng nhập Email để nhận mã OTP khôi phục mật khẩu.",
                                                 size=14,
                                                 color=COLORS["muted"],
                                                 text_align=ft.TextAlign.CENTER,
@@ -111,7 +111,7 @@ class ForgotPasswordScreen(ft.View):
         account = str(self.contact_input.value).strip()
 
         if not account:
-            self.show_snack("Vui lòng nhập Email hoặc Số điện thoại!")
+            self.show_snack("Vui lòng nhập Email Đã Đăng kí!")
             return
 
         # 1. Hiển thị loading (Sửa lỗi gán sai biến)
@@ -142,7 +142,7 @@ class ForgotPasswordScreen(ft.View):
                 self.page.session.store.set("reset_contact", account)
 
                 self.show_snack(f"Mã OTP đã được gửi tới {account}")
-
+                self.page.update()
                 # 5. CHUYỂN TRANG NGAY (Bỏ await countdown vì nó gây treo trang)
                 self.page.go("/VerifyOTP")
             else:
@@ -150,7 +150,7 @@ class ForgotPasswordScreen(ft.View):
                 # Reset lại nút nếu gửi thất bại
                 self.button_send_otp.disabled = False
                 self.button_send_otp.content = ft.Text("Gửi mã OTP", weight=ft.FontWeight.BOLD, color="#FFFFFF")
-                self.update()
+                self.page.update()
 
         except Exception as ex:
             print(f"Lỗi: {ex}")
@@ -160,7 +160,7 @@ class ForgotPasswordScreen(ft.View):
             self.update()
 
     def show_snack(self, message):
-        def show_snack(self, message):
+
             # Tạo mới SnackBar mỗi khi gọi để tránh xung đột trạng thái
             self.page.snack_bar = ft.SnackBar(
                 content=ft.Text(message, color="#FFFFFF"),
