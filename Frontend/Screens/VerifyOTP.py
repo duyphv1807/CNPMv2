@@ -1,9 +1,8 @@
 import flet as ft
 from Frontend.Style import COLORS, PRIMARY_BUTTON_STYLE
 import asyncio
-import datetime
-import random
 import time
+from Frontend.Services.APIService import ApiService
 
 class VerifyOTPScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -14,7 +13,25 @@ class VerifyOTPScreen(ft.View):
         )
         self.countdown_active = False
 
-        self.pin_fields = [self._create_pin_field(i) for i in range(6)]
+        self.pin_fields = []
+        for _ in range(6):
+            field = ft.TextField(
+                value="",
+                text_align=ft.TextAlign.CENTER,
+                width=45,
+                height=55,
+                # TĂNG ĐỘ ĐẬM TẠI ĐÂY:
+                text_style=ft.TextStyle(
+                    size=20,
+                    weight=ft.FontWeight.BOLD,  # Ép kiểu đậm cho chữ số nhập vào
+                    color=ft.Colors.BLACK
+                ),
+                # TĂNG ĐỘ ĐẬM CHO VIỀN (Border) ĐỂ NHÌN RÕ HƠN
+                border_width=6,
+                focused_border_color=ft.Colors.BLUE_ACCENT,
+                # ... các thuộc tính khác
+            )
+            self.pin_fields.append(field)
 
         self.contact_info_text = ft.Text(
             value="Đang tải thông tin...",  # Giá trị tạm thời
@@ -187,22 +204,40 @@ class VerifyOTPScreen(ft.View):
 
     async def handle_verify(self, e):
         entered_otp = "".join([f.value.strip() for f in self.pin_fields])
-        auth_data = self.page.session.store.get("otp_auth_data")
 
-        if not auth_data:
-            self.show_snack("Dữ liệu không hợp lệ!")
+        if len(entered_otp) < 6:
+            self.show_snack("Vui lòng nhập đầy đủ 6 chữ số!")
             return
 
-        # KIỂM TRA THỜI GIAN HẾT HẠN
-        if time.time() > auth_data.get("expiry", 0):
-            self.show_snack("Mã OTP đã hết hạn. Vui lòng gửi lại mã!")
+        email = self.page.session.store.get("reset_email")
+
+        if not email:
+            self.show_snack("Phiên làm việc hết hạn, vui lòng thử lại!")
+            self.page.go("/ForgotPassword")
             return
 
-        # KIỂM TRA MÃ OTP
-        if entered_otp == auth_data["code"]:
-            self.page.go("/ResetPassword")
-        else:
-            self.show_snack("Mã OTP không chính xác!")
+        # Hiển thị loading nhẹ (tùy chọn)
+        self.update()
+
+        try:
+            # 3. GỌI API XÁC THỰC: Để Backend đối soát với Database
+            # Không còn so sánh với auth_data["code"] ở đây nữa để tránh bị hack
+            result = ApiService.verify_otp_api(email, entered_otp)
+
+            if result.get("status") == "success":
+                # 4. Xác thực thành công -> Chuyển sang trang đặt mật khẩu mới
+                # Bạn nên lưu một "token" hoặc cờ xác nhận vào session để trang ResetPassword biết là đã verify xong
+                self.page.session.store.set("otp_verified", True)
+
+                self.show_snack("Xác thực thành công!")
+                self.page.go("/ResetPassword")
+            else:
+                # 5. Thông báo lỗi từ Backend (Mã sai, hết hạn, hoặc đã dùng rồi)
+                self.show_snack(result.get("message", "Mã xác thực không đúng!"))
+
+        except Exception as ex:
+            print(f"Lỗi Verify: {ex}")
+            self.show_snack("Lỗi kết nối máy chủ!")
 
     async def resend_otp(self, e):
         if self.countdown_text.color == COLORS["muted"]:
@@ -210,42 +245,40 @@ class VerifyOTPScreen(ft.View):
             self.show_snack("Vui lòng đợi cho đến khi thời gian đếm ngược kết thúc!")
             return
 
-        auth_data = self.page.session.store.get("otp_auth_data")
-        if not auth_data:
-            self.show_snack("Lỗi: Không tìm thấy thông tin phiên làm việc!")
+        contact = self.page.session.store.get("reset_email")
+        if not contact:
+            self.show_snack("Lỗi: Phiên làm việc đã hết hạn. Vui lòng thử lại từ đầu!")
+            self.page.go("/ForgotPassword")
             return
 
-        contact = auth_data.get("contact")
+        self.show_snack(f"Đang gửi lại mã tới {contact}...")
 
-        # 2. Tạo mã OTP mới (Giống hệt logic bên ForgotPassword)
-        new_otp = str(random.randint(100000, 999999))
-        new_expiry = datetime.datetime.now() + datetime.timedelta(minutes=6)
-        from Backend.Services.AuthService import AuthService
+        try:
+            # 3. GỌI API: Tương tự như lúc gửi lần đầu
+            # Backend sẽ tự tạo mã mới và cập nhật vào bảng OTP
+            result = ApiService.send_otp_api(contact)
 
-        # 3. Cập nhật lại session với mã mới
-        auth_data["code"] = new_otp
-        auth_data["expiry"] = new_expiry
-        self.page.session.store.set("otp_auth_data", auth_data)
+            if result.get("status") == "success":
+                # 4. Reset giao diện các ô PIN
+                for field in self.pin_fields:
+                    field.value = ""  # Hoặc " " tùy theo logic xóa của bạn
+                    field.disabled = False
 
-        print(f"Mã OTP mới cho {contact} là: {new_otp}")  # Debug
-        await AuthService.request_otp_reset_password(contact, new_otp)
+                # 5. Khởi động lại đếm ngược
+                self.countdown_active = True
+                self.page.run_task(self.start_countdown)
 
-        # 3. Reset giao diện các ô PIN
-        for field in self.pin_fields:
-            field.value = " "  # Trả về dấu cách mặc định như logic đã thống nhất
-            field.update()
+                # Focus lại ô đầu tiên
+                await self.pin_fields[0].focus()
 
-        for field in self.pin_fields:
-            field.value = " "  # Giữ dấu cách giả để lùi được
-            field.update()
+                self.show_snack(f"Mã mới đã được gửi tới {contact}!")
+                self.page.update()
+            else:
+                self.show_snack(result.get("message", "Gửi lại mã thất bại"))
 
-        self.countdown_active = False  # Dừng vòng lặp cũ
-        await asyncio.sleep(0.1)
-        self.page.run_task(self.start_countdown)  # Chạy countdown mới
-
-        await self.pin_fields[0].focus()
-        self.show_snack(f"Mã mới đã được gửi tới {contact}!")
-        self.update()
+        except Exception as ex:
+            print(f"Lỗi Resend OTP: {ex}")
+            self.show_snack("Lỗi kết nối dịch vụ!")
 
     def show_snack(self, message):
         self.page.snack_bar = ft.SnackBar(ft.Text(message))

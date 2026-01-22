@@ -1,5 +1,5 @@
-from Backend.ExcuteDatabase import supabase
-from Backend.Model.User import User
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Model.User import User
 
 class Wallet:
     def __init__(self, owner: User, balance: int = 0, currency: str = "VNĐ"):

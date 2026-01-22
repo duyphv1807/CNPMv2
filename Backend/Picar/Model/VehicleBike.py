@@ -1,5 +1,5 @@
-from Backend.Model.Vehicle import Vehicle
-from Backend.Model.User import User
+from Backend.Picar.Model.Vehicle import Vehicle
+from Backend.Picar.Model.User import User
 
 class VehicleBike(Vehicle):
     # Danh sách các tùy chọn chuẩn cho xe đạp

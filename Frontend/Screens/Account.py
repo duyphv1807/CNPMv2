@@ -7,7 +7,6 @@ from datetime import date, datetime
 from Backend.Helpers import update_user_profile, change_password
 from Frontend.Style import COLORS
 
-
 class AccountScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -15,23 +14,20 @@ class AccountScreen(ft.View):
             bgcolor=COLORS["bg"],
             padding=0
         )
+        try:
+            user_data = self.page.session.store.get("user_data")
+        except:
+            user_data = None
 
-        # 1. LẤY DỮ LIỆU TỪ SESSION (Đã đăng nhập ở Login)
-        user_data = page.session.store.get("user_data")
-
-        # Phòng trường hợp session trống (chưa login mà vào thẳng link)
         if not user_data:
-            user_data = {}
+            user_data = {"FullName": "Guest", "id": "0"}
 
-        # Khởi tạo các biến State
         self.user_id = user_data.get("id") or user_data.get("ID")
         self.avatar_path = user_data.get("Avatar") or "assets/default_avatar.png"
         self.license_image_path = user_data.get("DrivingLicense")
-        self.dob_value = user_data.get("DateOfBirth")  # Định dạng YYYY-MM-DD
+        self.dob_value = user_data.get("DateOfBirth")
 
         # --- UI COMPONENTS ---
-
-        # Avatar
         self.avatar_view = ft.Image(
             src=self.avatar_path,
             width=120,
@@ -44,12 +40,11 @@ class AccountScreen(ft.View):
             height=120,
             border_radius=ft.BorderRadius.all(60),
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            border=ft.border.all(2, ft.Colors.GREY_400),
+            border=ft.Border.all(2, ft.Colors.GREY_400),
             content=self.avatar_view,
             on_click=self.pick_avatar,
         )
 
-        # Input Fields
         self.fullname = ft.TextField(
             label="Họ tên",
             width=350,
@@ -64,7 +59,6 @@ class AccountScreen(ft.View):
             border_radius=ft.BorderRadius.all(8)
         )
 
-        # Date Picker (Fix lỗi Unresolved attribute)
         self.dob_text = ft.Text(
             value=self.dob_value if self.dob_value else "Chưa chọn ngày sinh",
             size=14,
@@ -78,7 +72,7 @@ class AccountScreen(ft.View):
         self.dob_picker = ft.Container(
             width=350,
             padding=ft.Padding(12, 12, 12, 12),
-            border=ft.border.all(1, ft.Colors.GREY_400),
+            border=ft.Border.all(1, ft.Colors.GREY_400),
             border_radius=ft.BorderRadius.all(8),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -87,7 +81,6 @@ class AccountScreen(ft.View):
                     ft.Icon(ft.Icons.CALENDAR_MONTH),
                 ],
             ),
-            # Fix lỗi: Sử dụng .open = True thay vì .pick_date()
             on_click=lambda _: self.show_picker(),
         )
 
@@ -97,13 +90,15 @@ class AccountScreen(ft.View):
             color=ft.Colors.GREY,
         )
 
-        self.license_button = ft.ElevatedButton(
-            text="Cập nhật ảnh GPLX",
+        # FIX: Sử dụng tham số 'text' thay vì 'content' nếu là chuỗi đơn thuần 
+        # để tránh lỗi TypeError trên bản Flet cũ
+        self.license_button = ft.FilledButton(
+            content="Cập nhật ảnh GPLX",
             icon=ft.Icons.CAMERA_ALT,
             on_click=self.pick_license_image,
+            width=350,
         )
 
-        # Password Panel
         self.old_pw = ft.TextField(label="Mật khẩu cũ", password=True, can_reveal_password=True, width=350)
         self.new_pw = ft.TextField(label="Mật khẩu mới", password=True, can_reveal_password=True, width=350)
         self.password_panel = ft.Column(
@@ -115,7 +110,6 @@ class AccountScreen(ft.View):
             ],
         )
 
-        # Layout chính
         self.controls = [
             ft.Row(
                 expand=True,
@@ -150,8 +144,6 @@ class AccountScreen(ft.View):
                 ],
             )
         ]
-
-    # --- LOGIC METHODS ---
 
     def show_picker(self):
         self.date_picker.open = True
@@ -195,18 +187,20 @@ class AccountScreen(ft.View):
         return path
 
     def save_profile(self, _):
-        # Kiểm tra 18 tuổi
+        if not self.dob_value:
+            self.show_snack("Vui lòng chọn ngày sinh", True)
+            return
+
         try:
             dob = datetime.strptime(self.dob_value, "%Y-%m-%d").date()
             age = (date.today() - dob).days // 365
             if age < 18:
                 self.show_snack("Bạn phải đủ 18 tuổi", True)
                 return
-        except:
-            self.show_snack("Vui lòng chọn ngày sinh", True)
+        except Exception:
+            self.show_snack("Định dạng ngày sinh không hợp lệ", True)
             return
 
-        # Cập nhật DB thông qua Helper
         update_user_profile(
             self.user_id,
             {
@@ -218,14 +212,14 @@ class AccountScreen(ft.View):
             }
         )
 
-        # CẬP NHẬT LẠI SESSION ĐỂ DASHBOARD ĐỒNG BỘ THEO
         current_user = self.page.session.store.get("user_data")
-        current_user.update({
-            "FullName": self.fullname.value,
-            "Avatar": self.avatar_path,
-            "DateOfBirth": self.dob_value
-        })
-        self.page.session.store.set("user_data", current_user)
+        if current_user:
+            current_user.update({
+                "FullName": self.fullname.value,
+                "Avatar": self.avatar_path,
+                "DateOfBirth": self.dob_value
+            })
+            self.page.session.store.set("user_data", current_user)
 
         self.show_snack("Lưu thông tin thành công!")
 
@@ -245,10 +239,12 @@ class AccountScreen(ft.View):
         self.page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor="red" if is_error else "green")
         self.page.snack_bar.open = True
         self.page.update()
-async def main(page: ft.Page):
 
+def main(page: ft.Page):
+    # Dùng .set() thay vì .store.set()
+    page.session.store.set("user_data", {"FullName": "Test User", "id": "1"})
     page.views.append(AccountScreen(page))
     page.update()
 
 if __name__ == "__main__":
-    ft.run(main)
+    ft.app(target=main)

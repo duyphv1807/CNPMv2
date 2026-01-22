@@ -1,6 +1,6 @@
-from Backend.Model.User import User
-from Backend.ExcuteDatabase import supabase
-from Backend.Helpers import generate_id
+from Backend.Picar.Model.User import User
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Utils.GenerateID import generate_id
 
 class Vehicle:
     # Danh sách các hạng bằng lái chuẩn tại Việt Nam

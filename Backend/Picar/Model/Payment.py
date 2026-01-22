@@ -1,8 +1,7 @@
 from datetime import date
-from Backend.ExcuteDatabase import supabase
-from Backend.Model.Booking import Booking
-from Backend.Helpers import generate_id
-
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Model.Booking import Booking
+from Backend.Picar.Utils.GenerateID import generate_id
 class Payment:
     # Whitelist các phương thức và trạng thái
     METHODS = ["ONLINE", "DIRECT", "WALLET"]

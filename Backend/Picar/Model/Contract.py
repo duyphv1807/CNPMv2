@@ -1,7 +1,7 @@
 from datetime import date
-from Backend.ExcuteDatabase import supabase
-from Backend.Model.Booking import Booking
-from Backend.Helpers import generate_id
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Model.Booking import Booking
+from Backend.Picar.Utils.GenerateID import generate_id
 
 class Contract:
     def __init__(self, booking: Booking, content: str = "", create_date: date = None, contract_id: str = None):

@@ -1,8 +1,8 @@
 from datetime import date
-from Backend.Model.User import User
-from Backend.Model.Booking import Booking
-from Backend.ExcuteDatabase import supabase
-from Backend.Helpers import generate_id
+from Backend.Picar.Model.User import User
+from Backend.Picar.Model.Booking import Booking
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Utils.GenerateID import generate_id
 
 class Feedback:
     def __init__(self, booking: Booking, sender: User,

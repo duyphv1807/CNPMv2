@@ -1,7 +1,7 @@
 import flet as ft
 from Frontend.Style import COLORS, FONTS, PRIMARY_BUTTON_STYLE
-import time
-import random
+from Frontend.Services.APIService import ApiService
+import asyncio
 
 class ForgotPasswordScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -120,44 +120,31 @@ class ForgotPasswordScreen(ft.View):
         self.update()
 
         try:
-            print("Đang gọi Backend...")
-            from Backend.Services.AuthService import AuthService
+            # 2. GỌI BACKEND: Không tự tạo mã OTP tại đây nữa
+            # Gửi email sang Backend, Backend sẽ tự tạo OTP, lưu DB và gửi mail cho khách
+            result = await asyncio.to_thread(lambda: ApiService.send_otp_api(account))
 
-            # 2. Tạo mã OTP và thời gian hết hạn (Dùng timestamp cho đồng bộ)
-            otp_code = str(random.randint(100000, 999999))
-            # Hết hạn sau 5 phút (300 giây)
-            expire_at = time.time() + 300
-
-            # 3. Gửi OTP (Giữ nguyên logic Backend của bạn)
-            success, message = await AuthService.request_otp_reset_password(account, otp_code)
-            print(f"Backend trả về: {success}, {message}")
-            if success:
-                # 4. Lưu vào session (Đổi key cho khớp với logic VerifyOTP đã sửa)
-                otp_data = {
-                    "code": otp_code,
-                    "expiry": expire_at,
-                    "contact": account
-                }
-                self.page.session.store.set("otp_auth_data", otp_data)
-                self.page.session.store.set("reset_contact", account)
+            if result.get("status") == "success":
+                # 3. Lưu email vào session để trang /VerifyOTP biết cần xác thực cho ai
+                self.page.session.store.set("reset_email", account)
 
                 self.show_snack(f"Mã OTP đã được gửi tới {account}")
-                self.page.update()
-                # 5. CHUYỂN TRANG NGAY (Bỏ await countdown vì nó gây treo trang)
+                # Chuyển trang ngay lập tức
                 self.page.go("/VerifyOTP")
             else:
-                self.show_snack(message)
-                # Reset lại nút nếu gửi thất bại
-                self.button_send_otp.disabled = False
-                self.button_send_otp.content = ft.Text("Gửi mã OTP", weight=ft.FontWeight.BOLD, color="#FFFFFF")
-                self.page.update()
+                # Hiện lỗi nếu email không tồn tại hoặc lỗi hệ thống
+                self.show_snack(result.get("message", "Gửi mã thất bại"))
+                self.reset_button_state()
 
         except Exception as ex:
-            print(f"Lỗi: {ex}")
-            self.show_snack("Lỗi kết nối dịch vụ!")
-            self.button_send_otp.disabled = False
-            self.button_send_otp.content = ft.Text("Gửi mã OTP", weight=ft.FontWeight.BOLD, color="#FFFFFF")
-            self.update()
+            print(f"Lỗi kết nối: {ex}")
+            self.show_snack("Lỗi kết nối dịch vụ! Vui lòng kiểm tra Wi-Fi/IP.")
+            self.reset_button_state()
+
+    def reset_button_state(self):
+        self.button_send_otp.disabled = False
+        self.button_send_otp.content = ft.Text("Gửi mã OTP", weight=ft.FontWeight.BOLD, color="#FFFFFF")
+        self.page.update()
 
     def show_snack(self, message):
 

@@ -5,7 +5,6 @@ import threading
 import tkinter as tk
 from Frontend.Style import COLORS
 from tkinter import filedialog
-from Frontend import Screens
 
 class RegisterScreen2(ft.View):
     def __init__(self, page: ft.Page):
@@ -237,7 +236,7 @@ class RegisterScreen2(ft.View):
         back_source = self.images.get("Back photo")
 
         # 3. Chạy OCR (Nên chạy trong một thread để không treo UI nếu hàm này đồng bộ)
-        from Backend.Helpers import Check_front_driving_license, Check_back_driving_license
+        from Backend.Picar.Utils.DrivingLicenseDetect import Check_front_driving_license, Check_back_driving_license
 
         # Giả sử hàm này tốn 2-5 giây
         front_data = Check_front_driving_license(front_source)
@@ -245,6 +244,22 @@ class RegisterScreen2(ft.View):
         # Tắt loading trước khi hiện thông báo lỗi hoặc chuyển trang
         loading_dlg.open = False
         self.page.update()
+        import asyncio
+        loop = asyncio.get_event_loop()
+        try:
+            # Chạy mặt trước
+            front_data = await loop.run_in_executor(None, Check_front_driving_license, front_source)
+
+            # Chạy mặt sau (nếu hàm này cũng nặng)
+            is_back_valid = await loop.run_in_executor(None, Check_back_driving_license, back_source)
+        except Exception as ex:
+            print(f"Lỗi khi chạy OCR: {ex}")
+            self.show_message("Lỗi", "Không thể xử lý ảnh!")
+            return
+        finally:
+            # 3. Tắt loading sau khi xong
+            loading_dlg.open = False
+            self.page.update()
 
         # 4. Kiểm tra kết quả mặt trước
         license_no = front_data.get("license_no")
@@ -258,9 +273,10 @@ class RegisterScreen2(ft.View):
             return
 
         # 5. Kiểm tra mặt sau
-        if not Check_back_driving_license(back_source):
+        if not is_back_valid:
             self.show_message("Lỗi xác thực", "Ảnh mặt sau không hợp lệ hoặc thiếu phôi PET!")
             return
+
         current_data = self.page.session.store.get("temp_data1")
         if self.page:
             if not current_data:
@@ -277,6 +293,7 @@ class RegisterScreen2(ft.View):
             current_data.update(new_info)
             self.page.session.store.set("temp_data2", current_data)
             print(f"Dữ liệu tổng hợp sau Step 2: {current_data}")
+            await asyncio.sleep(0.5)
             self.page.go("/Register3")
 
     def show_message(self, title, msg):

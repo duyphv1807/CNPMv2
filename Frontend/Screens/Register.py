@@ -242,7 +242,8 @@ class RegisterScreen(ft.View):
 
         # KIỂM TRA: Nếu có lỗi thì show MessageBox
         if errors:
-            self.show_error_box(errors)  # Gọi hàm MessageBox
+            self.show_error_box(errors)
+            self.update()# Gọi hàm MessageBox
             return
 
         data = {

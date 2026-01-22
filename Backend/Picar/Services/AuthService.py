@@ -4,10 +4,11 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import bcrypt
+from Backend.Picar.Model.OTP import OTP
 
 class AuthService:
     @staticmethod
-    async def request_otp_reset_password(contact, otp_code):
+    async def request_otp_reset_password(contact):
         # 1. Nhận diện Email hay SĐT
         is_email = re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', contact)
         is_phone = re.match(r'^0\d{9,10}$', contact)
@@ -17,11 +18,20 @@ class AuthService:
 
         # 2. Kiểm tra tài khoản có tồn tại trong Supabase không
         # Giả sử bạn dùng bảng User_Admin
-        from Backend.ExcuteDatabase import supabase
+        from Backend.Picar.ExcuteDatabase import supabase
         user_check = supabase.table("User_Admin") \
             .select("*") \
             .or_(f"Email.eq.{contact},PhoneNumber.eq.{contact}") \
             .execute()
+
+        new_otp = OTP(email=contact)
+
+        # 4. Lưu vào bảng OTP trên Supabase
+        if not new_otp.save_to_database():
+            return False, "Lỗi hệ thống: Không thể khởi tạo mã xác thực."
+
+        # 5. Lấy mã vừa tạo từ Object để gửi đi
+        otp_code = new_otp.otp_code
 
         if not user_check.data:
             return False, "Tài khoản không tồn tại trên hệ thống!"
@@ -102,7 +112,7 @@ class AuthService:
 
     @staticmethod
     async def update_password(contact, new_password):
-        from Backend.ExcuteDatabase import supabase
+        from Backend.Picar.ExcuteDatabase import supabase
 
         # 🔐 HASH PASSWORD
         hashed = bcrypt.hashpw(

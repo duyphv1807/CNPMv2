@@ -1,7 +1,7 @@
-from Backend.Model.User import User
+from Backend.Picar.Model.User import User
 from datetime import date
-from Backend.Helpers import generate_id
-from Backend.ExcuteDatabase import supabase
+from Backend.Picar.Utils.GenerateID import generate_id
+from Backend.Picar.ExcuteDatabase import supabase
 
 class Admin(User):
     def __init__(self, full_name: str, nation_id: str, date_of_birth: date,

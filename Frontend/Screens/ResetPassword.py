@@ -1,6 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, PRIMARY_BUTTON_STYLE
-from Backend.Services.AuthService import AuthService
+from Backend.Picar.Services.AuthService import AuthService
 
 class ResetPasswordScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -12,6 +12,10 @@ class ResetPasswordScreen(ft.View):
 
         self.new_password = ft.TextField(
             label="Mật khẩu mới",
+            text_style=ft.TextStyle(
+                weight=ft.FontWeight.BOLD,  # Làm các dấu chấm mật khẩu to và rõ hơn
+                size=18
+            ),
             password=True,
             width=float("inf"),
             border_color=COLORS["border"],
@@ -20,6 +24,10 @@ class ResetPasswordScreen(ft.View):
 
         self.confirm_password = ft.TextField(
             label="Xác nhận mật khẩu",
+            text_style=ft.TextStyle(
+                weight=ft.FontWeight.BOLD,  # Làm các dấu chấm mật khẩu to và rõ hơn
+                size=18
+            ),
             password=True,
             width=float("inf"),
             border_color=COLORS["border"],

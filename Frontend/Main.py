@@ -18,8 +18,7 @@ async def main(page: ft.Page):
 
     async def route_change(e):
         page.views.clear()
-        if page.route == "/Login":
-            # Khởi tạo View Login
+        if page.route == "/" or page.route == "/Login":
             page.views.append(LoginScreen(page))
         elif page.route == "/Register":
             page.views.append(RegisterScreen(page))
@@ -31,8 +30,6 @@ async def main(page: ft.Page):
             page.views.append(DashboardScreen(page))
         elif page.route == "/ForgotPassword":
             page.views.append(ForgotPasswordScreen(page))
-        elif page.route == "/":
-            page.views.append(ForgotPasswordScreen(page))
         elif page.route == "/VerifyOTP":
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
@@ -42,11 +39,6 @@ async def main(page: ft.Page):
         page.update()
 
     page.on_route_change = route_change
-
-    page.on_route_change = route_change
-    # page.go("/ForgotPassword")
-    await page.push_route("/ForgotPassword")
-
     # Sử dụng push_route chuẩn (không cần _async ở bản 0.80.2)
     await page.push_route("/Login")
 

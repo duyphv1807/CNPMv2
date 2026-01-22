@@ -1,8 +1,7 @@
 from datetime import date
-from Backend.ExcuteDatabase import supabase
+from Backend.Picar.ExcuteDatabase import supabase
 import re
-from Backend.Helpers import generate_id, save_driving_license_data, upload_image_to_storage
-from datetime import datetime
+from Backend.Picar.Utils.GenerateID import generate_id
 
 class User:
     def __init__(self, full_name: str, nation_id: str, date_of_birth: date,
@@ -141,69 +140,3 @@ class User:
                     return None
         return None
 
-    @classmethod
-    def register_user(cls, data):
-        try:
-            # 1. Khởi tạo User trước (để lấy user_id định danh duy nhất)
-            dob_source = data.get('dob')
-            dob_obj = datetime.strptime(dob_source, '%d/%m/%Y').date() if isinstance(dob_source, str) else dob_source
-
-            new_user = cls(
-                full_name=data.get('fullname'),
-                nation_id=data.get('nation_id'),
-                date_of_birth=dob_obj,
-                phone_number=data.get('phone'),
-                email=data.get('email'),
-                driving_license=data.get('license_no'),
-                password=data.get('password'),
-                avatar="default_avatar.png",  # Tạm thời để mặc định
-                user_id=None  # Hệ thống tự tạo USxxxxxx
-            )
-
-            # 2. Xử lý Avatar ĐỊNH DANH THEO USER_ID
-            avatar_source = data.get('avatar')
-            # LƯU Ý: Kiểm tra tên Bucket chính xác trên Supabase (Ví dụ: "Avatar")
-            target_bucket = "Avatar"
-
-            if avatar_source and avatar_source != "default_avatar.png":
-                uploaded_url = upload_image_to_storage(
-                    avatar_source,
-                    f"{new_user.user_id}_avatar.jpg",
-                    bucket=target_bucket
-                )
-                if uploaded_url:
-                    new_user.avatar = uploaded_url
-                else:
-                    # Nếu upload lỗi, gán ảnh mặc định để không bị lỗi DB
-                    new_user.avatar = "https://tdkmoeyqaejiucanbgdj.supabase.co/storage/v1/object/public/Avatar/avatar.jpg"
-            else:
-                new_user.avatar = "https://tdkmoeyqaejiucanbgdj.supabase.co/storage/v1/object/public/Avatar/avatar.jpg"
-
-            # 3. Lưu bảng User_Admin
-            user_response = new_user.save_to_db()
-
-            if user_response:
-                # Khởi tạo ví với số dư 0 VNĐ cho owner là new_user vừa tạo
-                from Backend.Model.Wallet import Wallet
-                #Impport tại đây để tránh lỗi vòng lặp
-                new_wallet = Wallet(owner=new_user, balance=0)
-                wallet_response = new_wallet.create_wallet()
-
-                if wallet_response:
-                    print(f"--> [SYSTEM] Tạo ví thành công cho User: {new_user.user_id}")
-                else:
-                    print(f"--> [WARNING] User đã tạo nhưng ví bị lỗi.")
-
-                # 4. Lưu bảng DrivingLicense (Giữ nguyên)
-                save_driving_license_data(
-                    data.get('license_no'),
-                    data.get('front_img'),
-                    data.get('back_img'),
-                    data.get('license_class')
-                )
-                return True, "Đăng ký thành công và đã tạo ví điện tử!"
-
-            return False, "Lỗi khi lưu dữ liệu người dùng."
-
-        except Exception as e:
-            return False, f"Lỗi hệ thống: {str(e)}"

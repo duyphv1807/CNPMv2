@@ -1,7 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, FONTS, PRIMARY_BUTTON_STYLE
-from Backend.ExcuteDatabase import supabase
-import bcrypt
+from Frontend.Services.APIService import ApiService
 
 class LoginScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -166,37 +165,31 @@ class LoginScreen(ft.View):
             return
 
         try:
-            # 3. Truy vấn Database (Lưu ý: "Email" phải khớp với tên cột trong SQL)
-            response = supabase.table("User_Admin") \
-                .select("*") \
-                .or_(f"Email.eq.{account_val},PhoneNumber.eq.{account_val}") \
-                .execute()
+            # 3. GỌI API QUA SERVICE (Đây là bước quan trọng nhất)
+            # Hàm này sẽ gửi request sang Flask và đợi phản hồi
+            result = ApiService.login_api(account_val, password_val)
 
-            # 4. Kiểm tra tài khoản tồn tại
-            if not response.data:
-                self.show_error_box(["Tài khoản không tồn tại trên hệ thống"])
-                return
+            # 4. XỬ LÝ KẾT QUẢ TỪ BACKEND TRẢ VỀ
+            if result.get("status") == "success":
+                user_data = result.get("user_data")
 
-            # 5. Kiểm tra mật khẩu (Giả sử mật khẩu cột tên là "Password")
-            user_data = response.data[0]
+                # Lưu thông tin người dùng vào Session để các màn hình khác dùng chung
+                # (Không cần mật khẩu, chỉ cần FullName, Role, ID...)
+                self.page.session.store.set("user_data", user_data)
 
-            hashed_password = user_data["Password"]
+                print(f"Đăng nhập thành công! Chào mừng {user_data.get('FullName')}")
 
-            if not bcrypt.checkpw(
-                    password_val.encode("utf-8"),
-                    hashed_password.encode("utf-8")
-            ):
-                self.show_error_box(["Mật khẩu không chính xác. Vui lòng thử lại"])
-                return
-
-            # 6. Đăng nhập thành công
-            print(f"Chào mừng {user_data['FullName']}!")
-            self.page.session.store.set("user_data", user_data)
-            self.page.go("/Dashboard")
+                # Chuyển hướng sang màn hình chính
+                self.page.go("/Dashboard")
+            else:
+                # Nếu thất bại (Sai pass, không tồn tại...), hiển thị lỗi từ Backend gửi về
+                error_message = result.get("message", "Đăng nhập thất bại")
+                self.show_error_box([error_message])
 
         except Exception as ex:
-            print(f"Lỗi hệ thống: {ex}")
-            self.show_error_box(["Lỗi kết nối cơ sở dữ liệu. Vui lòng kiểm tra mạng"])
+            # Xử lý khi có lỗi kết nối mạng hoặc lỗi code
+            print(f"Lỗi khi gọi API: {ex}")
+            self.show_error_box(["Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại mạng!"])
 
     async def handle_register(self, e):
         if self.page:

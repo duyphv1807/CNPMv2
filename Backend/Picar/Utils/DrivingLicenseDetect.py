@@ -1,28 +1,10 @@
-import random
-import string
 import cv2
 import easyocr
-import numpy as np
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Utils.LoadImageFlexible import load_image_flexible
 import torch
-from Backend.ExcuteDatabase import supabase
+import numpy as np
 import re
-
-def generate_id(prefix: str, length: int = 10):
-    """
-    Tạo mã ID ngẫu nhiên có độ dài cố định.
-    Ví dụ: BK + 8 ký tự ngẫu nhiên = 10 ký tự.
-    """
-    prefix = prefix.upper()
-    if len(prefix) >= length:
-        return prefix[:length]  # Trường hợp prefix quá dài (hiếm gặp)
-
-    # Tính số ký tự cần tạo thêm
-    random_length = length - len(prefix)
-
-    # Tạo chuỗi ngẫu nhiên gồm chữ in hoa và số
-    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=random_length))
-
-    return f"{prefix}{random_part}"
 
 _reader = None
 def get_reader():
@@ -33,24 +15,6 @@ def get_reader():
         _reader = easyocr.Reader(['vi', 'en'], gpu=True)
     return _reader
 
-def load_image_flexible(source):
-    """
-    Hàm bổ trợ: Chấp nhận source là path (str) hoặc numpy array (image)
-    """
-    if isinstance(source, str):
-        # Nếu là đường dẫn, dùng imread
-        # Sử dụng imdecode để tránh lỗi đường dẫn có ký tự tiếng Việt/Windows
-        try:
-            nparr = np.fromfile(source, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        except Exception:
-            return None
-    elif isinstance(source, np.ndarray):
-        # Nếu đã là mảng numpy (từ Camera), dùng luôn
-        img = source.copy()
-    else:
-        return None
-    return img
 def extract_license_class(source):
     reader = get_reader()
     """Trích xuất hạng bằng lái (A1, B2, C...)"""
@@ -397,128 +361,4 @@ def save_driving_license_data(license_id, front_source, back_source, license_cla
     except Exception as e:
         print(f"--> [ERROR] Save Driving License failed: {e}")
         return None
-
-def get_current_user():
-    """
-    Lấy thông tin user hiện tại.
-    Tạm thời lấy USER đầu tiên (đúng chuẩn đồ án, chưa có session/login).
-    """
-    try:
-        response = (
-            supabase.table("User_Admin")
-            .select("UserID, FullName, DateOfBirth, DrivingLicense, Email, Avatar")
-            .eq("ClassifyUser", "USER")
-            .limit(1)
-            .execute()
-        )
-
-        if response.data:
-            return response.data[0]
-        return None
-
-    except Exception as e:
-        print(f"[ERROR] get_current_user: {e}")
-        return None
-
-
-def update_user_profile(user_id, data: dict):
-    """
-    Cập nhật thông tin người dùng:
-    - Tên
-    - Ngày sinh
-    - GPLX
-    - Email
-    - Ảnh đại diện
-    """
-    try:
-        payload = {}
-
-        # Chỉ update field nào có truyền lên
-        if "FullName" in data:
-            payload["FullName"] = data["FullName"]
-
-        if "DateOfBirth" in data:
-            payload["DateOfBirth"] = data["DateOfBirth"]
-
-        if "DrivingLicense" in data:
-            payload["DrivingLicense"] = data["DrivingLicense"]
-
-        if "Email" in data:
-            payload["Email"] = data["Email"]
-
-        if "Avatar" in data:
-            payload["Avatar"] = data["Avatar"]
-
-        if not payload:
-            return False
-
-        supabase.table("User_Admin") \
-            .update(payload) \
-            .eq("UserID", user_id) \
-            .execute()
-
-        return True
-
-    except Exception as e:
-        print(f"[ERROR] update_user_profile: {e}")
-        return False
-def upload_image_to_storage(image_source, filename, bucket="DrivingLicense"):
-    """
-    Đẩy ảnh lên Supabase Storage và trả về Public URL.
-    """
-    file_data = None
-    try:
-        if image_source is None: return None
-
-        # Chuyển đổi sang bytes
-        if isinstance(image_source, np.ndarray):
-            import cv2
-            _, buffer = cv2.imencode('.jpg', image_source)
-            file_data = buffer.tobytes()
-        elif isinstance(image_source, str):
-            with open(image_source, 'rb') as f:
-                file_data = f.read()
-
-        # Trường hợp 3: Byte data trực tiếp
-        else:
-            file_data = image_source
-
-        storage_path = f"{filename}.jpg"
-
-        # Upload lên bucket được chỉ định
-        supabase.storage.from_(bucket).upload(
-            path=storage_path,
-            file=file_data,
-            file_options={"content-type": "image/jpeg", "upsert": "true"}
-        )
-
-        return supabase.storage.from_(bucket).get_public_url(storage_path)
-    except Exception as e:
-        print(f"Lỗi upload: {e}")
-        return None
-
-
-def change_password(user_id, old_password, new_password):
-    try:
-        # 1. Truy vấn user từ Supabase/Database
-        # Giả sử bạn dùng Supabase
-        response = supabase.table("User_Admin").select("*").eq("id", user_id).execute()
-
-        if response.data:
-            user = response.data[0]
-            # 2. Kiểm tra mật khẩu cũ có khớp không
-            if user.get("Password") == old_password:
-                # 3. Cập nhật mật khẩu mới
-                supabase.table("User_Admin").update({"Password": new_password}).eq("id", user_id).execute()
-                return True
-        return False
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-if __name__ == "__main__":
-    path = r"C:\Users\ASUS\OneDrive\Máy tính\bài tập\test\a1.jpg"
-    path1 = r"C:\Users\ASUS\OneDrive\Máy tính\bài tập\test\back.jpg"
-    Check_back_driving_license(path1)
-
 

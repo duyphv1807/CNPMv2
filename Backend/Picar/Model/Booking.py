@@ -1,8 +1,8 @@
 from datetime import date
-from Backend.ExcuteDatabase import supabase
-from Backend.Model.User import User
-from Backend.Model.Vehicle import Vehicle
-from Backend.Helpers import generate_id
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Model.User import User
+from Backend.Picar.Model.Vehicle import Vehicle
+from Backend.Picar.Utils.GenerateID import generate_id
 
 class Booking:
     def __init__(self, renter: User, owner: User, vehicle: Vehicle,
