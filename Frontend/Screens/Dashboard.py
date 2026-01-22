@@ -1,5 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS
+from datetime import datetime, timedelta
 
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -15,6 +16,29 @@ class DashboardScreen(ft.View):
         self.rental_mode = "self-driving"
         self.selected_category = "Car"
         self.category_buttons = {}
+
+        # MẶC ĐỊNH: Nhận xe bây giờ, Trả xe sau 1 ngày
+        self.start_date = datetime.now()
+        self.end_date = datetime.now() + timedelta(days=1)
+
+        # --- INITIALIZE DATE PICKERS ---
+        self.start_date_picker = ft.DatePicker(
+            on_change=self.on_start_date_change,
+            first_date=datetime.now(),
+        )
+        self.end_date_picker = ft.DatePicker(
+            on_change=self.on_end_date_change,
+            first_date=datetime.now(),
+        )
+
+        page.overlay.append(self.start_date_picker)
+        page.overlay.append(self.end_date_picker)
+
+        # Text objects để cập nhật giao diện khi chọn ngày
+        self.txt_start_val = ft.Text(self.start_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
+                                     color="#333333")
+        self.txt_end_val = ft.Text(self.end_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
+                                   color="#333333")
 
         # KHỞI TẠO KHUNG HIỂN THỊ SẢN PHẨM (Nằm trong vùng cuộn riêng)
         self.product_display = ft.Column(spacing=15)
@@ -68,15 +92,29 @@ class DashboardScreen(ft.View):
                             controls=[
                                 self.create_info_row(ft.Icons.LOCATION_ON_OUTLINED, "Địa điểm",
                                                      "TP. Hồ Chí Minh, Việt Nam"),
-                                self.create_info_row(ft.Icons.CALENDAR_MONTH_OUTLINED, "Thời gian thuê",
-                                                     "12:00, 21/01/2026 - 12:00, 22/01/2026"),
+                                # --- SỬA LỖI TẠI ĐÂY ---
+                                ft.Row([
+                                    ft.Container(
+                                        expand=True,
+                                        content=self.create_clickable_time_column(ft.Icons.LOGIN_ROUNDED, "Ngày nhận",
+                                                                                  self.txt_start_val),
+                                        on_click=self.open_start_picker  # Đổi sang hàm helper
+                                    ),
+                                    ft.Container(
+                                        expand=True,
+                                        content=self.create_clickable_time_column(ft.Icons.LOGOUT_ROUNDED, "Ngày trả",
+                                                                                  self.txt_end_val),
+                                        on_click=self.open_end_picker  # Đổi sang hàm helper
+                                    ),
+                                ], spacing=10),  # Đã đóng ngoặc vuông cho ft.Row
+
                                 ft.Container(height=5),
                                 ft.FilledButton(
                                     content=ft.Text("Đặt xe ngay", size=16, weight=ft.FontWeight.BOLD, color="#FFFFFF"),
                                     width=float("inf"), height=45,
                                     style=ft.ButtonStyle(bgcolor=COLORS["primary"],
                                                          shape=ft.RoundedRectangleBorder(radius=12)),
-                                    on_click=lambda _: print("Booking...")
+                                    on_click=lambda _: print(f"Booking: {self.start_date} to {self.end_date}")
                                 )
                             ]
                         )
@@ -147,6 +185,35 @@ class DashboardScreen(ft.View):
 
     # --- HELPER METHODS ---
 
+    def create_clickable_time_column(self, icon, label, text_obj):
+        return ft.Column([
+            ft.Row([ft.Icon(icon, size=16, color=COLORS["muted"]), ft.Text(label, color=COLORS["muted"], size=11)],
+                    spacing=5),
+            text_obj,
+            ft.Divider(height=1, color="#EEEEEE")
+        ], spacing=2)
+
+    def on_start_date_change(self, e):
+        if self.start_date_picker.value:
+            self.start_date = self.start_date_picker.value
+            self.txt_start_val.value = self.start_date.strftime("%d/%m/%Y")
+            # Logic: Nếu ngày trả trước ngày nhận, tự nhảy ngày trả lên +1 ngày
+            if self.end_date <= self.start_date:
+                self.end_date = self.start_date + timedelta(days=1)
+                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
+            self.page.update()
+
+    def on_end_date_change(self, e):
+        if self.end_date_picker.value:
+            # Kiểm tra không cho chọn ngày trả trước ngày nhận
+            if self.end_date_picker.value <= self.start_date:
+                self.page.snack_bar = ft.SnackBar(ft.Text("Ngày trả phải sau ngày nhận!"))
+                self.page.snack_bar.open = True
+            else:
+                self.end_date = self.end_date_picker.value
+                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
+            self.page.update()
+
     def create_mode_tab(self, text, mode, icon, active):
         is_left = (mode == "self-driving")
         icon_ctrl = ft.Icon(icon, size=18, color="#FFFFFF" if active else COLORS["primary"])
@@ -210,7 +277,7 @@ class DashboardScreen(ft.View):
         for cat_name, (container, text_obj) in self.category_buttons.items():
             active = (cat_name == name)
             # Cập nhật style cho Container
-            container.border = ft.border.all(2, "black" if active else "#E0E0E0")
+            container.border = ft.Border.all(2, "black" if active else "#E0E0E0")
             # Cập nhật style cho Text
             text_obj.weight = ft.FontWeight.W_600 if active else ft.FontWeight.W_400
 
@@ -270,6 +337,15 @@ class DashboardScreen(ft.View):
                 )
             )
 
+    def open_start_picker(self, e):
+        print("Đang mở lịch...")
+        self.start_date_picker.open = True
+        self.page.update()
+
+    def open_end_picker(self, e):
+        print("Đang mở lịch...")
+        self.end_date_picker.open = True
+        self.page.update()
 # --- Chạy main ---
 async def main(page: ft.Page):
 
