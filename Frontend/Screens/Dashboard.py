@@ -1,6 +1,7 @@
 import flet as ft
 from Frontend.Style import COLORS
 from datetime import datetime, timedelta
+import time
 
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -33,6 +34,13 @@ class DashboardScreen(ft.View):
 
         page.overlay.append(self.start_date_picker)
         page.overlay.append(self.end_date_picker)
+
+        self.location_text = ft.Text(
+            "TP. Hồ Chí Minh, Việt Nam",
+            size=14,
+            weight=ft.FontWeight.BOLD,
+            color="#333333"
+        )
 
         # Text objects để cập nhật giao diện khi chọn ngày
         self.txt_start_val = ft.Text(self.start_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
@@ -90,8 +98,12 @@ class DashboardScreen(ft.View):
                         content=ft.Column(
                             spacing=8,
                             controls=[
-                                self.create_info_row(ft.Icons.LOCATION_ON_OUTLINED, "Địa điểm",
-                                                     "TP. Hồ Chí Minh, Việt Nam"),
+                                ft.Container(
+                                    content=self.create_info_row(ft.Icons.LOCATION_ON_OUTLINED, "Địa điểm",
+                                                                 self.location_text),
+                                    on_click=self.handle_location_click,
+                                    ink = True,
+                                ),
                                 # --- SỬA LỖI TẠI ĐÂY ---
                                 ft.Row([
                                     ft.Container(
@@ -242,11 +254,19 @@ class DashboardScreen(ft.View):
             items[0].color = items[1].color = "#FFFFFF" if active else COLORS["primary"]
         self.page.update()
 
-    def create_info_row(self, icon, label, value):
+    def create_info_row(self, icon, label, content_control):
+        # Nếu content_control là chuỗi, ta mới tạo ft.Text mới
+        # Nếu nó đã là một ft.Text (như self.location_text), ta dùng luôn nó
+        display_item = content_control if isinstance(content_control, ft.Control) else ft.Text(
+            content_control, size=14, weight=ft.FontWeight.BOLD, color="#333333"
+        )
+
         return ft.Column([
-            ft.Row([ft.Icon(icon, size=18, color=COLORS["muted"]), ft.Text(label, color=COLORS["muted"], size=12)],
-                   spacing=5),
-            ft.Text(value, size=14, weight=ft.FontWeight.BOLD, color="#333333"),
+            ft.Row([
+                ft.Icon(icon, size=18, color=COLORS["muted"]),
+                ft.Text(label, color=COLORS["muted"], size=12)
+            ], spacing=5),
+            display_item,  # Đưa đối tượng thật vào đây
             ft.Divider(height=1, color="#EEEEEE")
         ], spacing=3)
 
@@ -346,6 +366,33 @@ class DashboardScreen(ft.View):
         print("Đang mở lịch...")
         self.end_date_picker.open = True
         self.page.update()
+
+    def handle_location_click(self, e):
+        print(">>> Đang chạy hàm xử lý...")
+
+        # Bước 1: Hiện trạng thái chờ
+        self.location_text.value = "Đang xin quyền truy cập..."
+        self.location_text.color = COLORS["primary"]
+        self.page.update()
+
+        # Bước 2: Nghỉ 1 giây để mắt người kịp thấy sự thay đổi
+        time.sleep(1)
+
+        try:
+            # Giả lập lấy tọa độ thành công
+            lat, lng = 10.7626, 106.6601
+
+            # Bước 3: Cập nhật kết quả cuối
+            self.location_text.value = "Quận 1, TP. Hồ Chí Minh"
+            self.location_text.color = "#333333"
+            print(">>> Đã cập nhật UI thành công")
+
+        except Exception as ex:
+            self.location_text.value = "Lỗi xác định vị trí"
+            print(f">>> Lỗi: {ex}")
+
+        self.page.update()
+
 # --- Chạy main ---
 async def main(page: ft.Page):
 
