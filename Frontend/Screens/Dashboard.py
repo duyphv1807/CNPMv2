@@ -14,37 +14,31 @@ class DashboardScreen(ft.View):
         user_info = page.session.store.get("user_data")
         display_name = user_info["FullName"] if user_info else "Guest"
 
+        # --- KHÔI PHỤC DỮ LIỆU TỪ SESSION ---
+        saved_loc = page.session.store.get("location_name") or "TP. Hồ Chí Minh, Việt Nam"
+        s_date_raw = page.session.store.get("start_date")
+        e_date_raw = page.session.store.get("end_date")
+
+        self.start_date = datetime.fromisoformat(s_date_raw) if s_date_raw else datetime.now()
+        self.end_date = datetime.fromisoformat(e_date_raw) if e_date_raw else datetime.now() + timedelta(days=1)
+
         # --- STATE ---
         self.rental_mode = "self-driving"
         self.selected_category = "Car"
         self.category_buttons = {}
 
+        # --- OVERLAYS ---
         self.geolocator = fg.Geolocator()
-        page.overlay.append(self.geolocator)
+        self.start_date_picker = ft.DatePicker(on_change=self.on_start_date_change, first_date=datetime.now())
+        self.end_date_picker = ft.DatePicker(on_change=self.on_end_date_change, first_date=datetime.now())
+        self.start_time_picker = ft.TimePicker(on_change=self.on_start_time_change)
+        self.end_time_picker = ft.TimePicker(on_change=self.on_end_time_change)
 
-        # MẶC ĐỊNH: Nhận xe bây giờ, Trả xe sau 1 ngày
-        self.start_date = datetime.now()
-        self.end_date = datetime.now() + timedelta(days=1)
+        page.overlay.extend([self.geolocator, self.start_date_picker, self.end_date_picker, self.start_time_picker,
+                             self.end_time_picker])
 
-        # --- INITIALIZE DATE PICKERS ---
-        self.start_date_picker = ft.DatePicker(
-            on_change=self.on_start_date_change,
-            first_date=datetime.now(),
-        )
-        self.end_date_picker = ft.DatePicker(
-            on_change=self.on_end_date_change,
-            first_date=datetime.now(),
-        )
-
-        page.overlay.append(self.start_date_picker)
-        page.overlay.append(self.end_date_picker)
-
-        self.location_text = ft.Text(
-            "TP. Hồ Chí Minh, Việt Nam",
-            size=14,
-            weight=ft.FontWeight.BOLD,
-            color="#333333"
-        )
+        self.location_text = ft.Text(saved_loc, size=14, weight=ft.FontWeight.BOLD, color="#333333")
+        self.product_display = ft.Column(spacing=15)
 
         # Text objects để cập nhật giao diện khi chọn ngày
         self.txt_start_val = ft.Text(self.start_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
@@ -53,7 +47,6 @@ class DashboardScreen(ft.View):
                                    color="#333333")
 
         # KHỞI TẠO KHUNG HIỂN THỊ SẢN PHẨM (Nằm trong vùng cuộn riêng)
-        self.product_display = ft.Column(spacing=15)
 
         # --- NAVIGATION BAR ---
         self.navigation_bar_custom = ft.NavigationBar(
@@ -130,7 +123,7 @@ class DashboardScreen(ft.View):
                                     width=float("inf"), height=45,
                                     style=ft.ButtonStyle(bgcolor=COLORS["primary"],
                                                          shape=ft.RoundedRectangleBorder(radius=12)),
-                                    on_click=lambda _: print(f"Booking: {self.start_date} to {self.end_date}")
+                                    on_click=lambda _: self.page.go("/Search")
                                 )
                             ]
                         )
@@ -211,24 +204,47 @@ class DashboardScreen(ft.View):
 
     def on_start_date_change(self, e):
         if self.start_date_picker.value:
-            self.start_date = self.start_date_picker.value
-            self.txt_start_val.value = self.start_date.strftime("%d/%m/%Y")
-            # Logic: Nếu ngày trả trước ngày nhận, tự nhảy ngày trả lên +1 ngày
+            d = self.start_date_picker.value
+            self.start_date = self.start_date.replace(year=d.year, month=d.month, day=d.day)
+            self.start_time_picker.open = True  # Tự động chọn giờ sau khi chọn ngày
+            self.page.update()
+
+    def on_start_time_change(self, e):
+        if self.start_time_picker.value:
+            t = self.start_time_picker.value
+            self.start_date = self.start_date.replace(hour=t.hour, minute=t.minute)
+
+            # Kiểm tra nếu ngày trả bị nhỏ hơn ngày nhận mới
             if self.end_date <= self.start_date:
-                self.end_date = self.start_date + timedelta(days=1)
-                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
+                self.end_date = self.start_date + timedelta(hours=2)  # Mặc định thuê ít nhất 2h
+                self.page.session.store.set("end_date", self.end_date.isoformat())
+                self.txt_end_val.value = self.end_date.strftime("%H:%M - %d/%m/%Y")
+
+            self.page.session.store.set("start_date", self.start_date.isoformat())
+            self.txt_start_val.value = self.start_date.strftime("%H:%M - %d/%m/%Y")
             self.page.update()
 
     def on_end_date_change(self, e):
         if self.end_date_picker.value:
-            # Kiểm tra không cho chọn ngày trả trước ngày nhận
-            if self.end_date_picker.value <= self.start_date:
-                self.page.snack_bar = ft.SnackBar(ft.Text("Ngày trả phải sau ngày nhận!"))
+            d = self.end_date_picker.value
+            self.end_date = self.end_date.replace(year=d.year, month=d.month, day=d.day)
+            self.end_time_picker.open = True
+            self.page.update()
+
+    def on_end_time_change(self, e):
+        if self.end_time_picker.value:
+            t = self.end_time_picker.value
+            temp_end = self.end_date.replace(hour=t.hour, minute=t.minute)
+
+            if temp_end <= self.start_date:
+                self.page.snack_bar = ft.SnackBar(ft.Text("Thời gian trả phải sau thời gian nhận!"))
                 self.page.snack_bar.open = True
             else:
-                self.end_date = self.end_date_picker.value
-                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
+                self.end_date = temp_end
+                self.page.session.store.set("end_date", self.end_date.isoformat())
+                self.txt_end_val.value = self.end_date.strftime("%H:%M - %d/%m/%Y")
             self.page.update()
+
 
     def create_mode_tab(self, text, mode, icon, active):
         is_left = (mode == "self-driving")
@@ -389,7 +405,9 @@ class DashboardScreen(ft.View):
                 result = ApiService.locate_api(True, pos.latitude, pos.longitude)
 
                 if result and result.get("status") == "success":
-                    self.location_text.value = result.get("display_name")
+                    addr = result.get("display_name")
+                    self.location_text.value = addr
+                    self.page.session.store.set("location_name",addr)
                     self.location_text.color = "#333333"
                 else:
                     self.location_text.value = "Server từ chối xử lý"

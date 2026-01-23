@@ -1,5 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS
+from datetime import datetime
 class SearchScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -7,14 +8,28 @@ class SearchScreen(ft.View):
             padding=0,
             bgcolor="#F5F7FA",
         )
+        # Lấy địa chỉ
+        saved_location = page.session.store.get("location_name") or "TP. Hồ Chí Minh"
+
+        # Lấy và format lại chuỗi thời gian hiển thị
+        s_date_raw = page.session.store.get("start_date")
+        e_date_raw = page.session.store.get("end_date")
+
+        if s_date_raw and e_date_raw:
+            start_dt = datetime.fromisoformat(s_date_raw)
+            end_dt = datetime.fromisoformat(e_date_raw)
+            # Format: "HH:mm Thu, ngày/tháng" (Giả lập format giống mẫu của bạn)
+            time_display = f"{start_dt.strftime('%H:%M')} T{start_dt.weekday() + 2}, {start_dt.strftime('%d/%m')} • {end_dt.strftime('%H:%M')} T{end_dt.weekday() + 2}, {end_dt.strftime('%d/%m')}"
+        else:
+            time_display = "None"
 
         # --- 1. SEARCH BAR TOP ---
         self.search_bar = ft.Container(
             content=ft.Row([
                 ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW, icon_size=16),
                 ft.Column([
-                    ft.Text("TP. Hồ Chí Minh", size=14, weight=ft.FontWeight.BOLD),
-                    ft.Text("21:00 T6, 23/01 • 20:00 T7, 24/01", size=11, color=COLORS["primary"]),
+                    ft.Text(saved_location, size=14, weight=ft.FontWeight.BOLD, no_wrap=True),
+                    ft.Text(time_display, size=11, color=COLORS["primary"]),
                 ], spacing=2, alignment=ft.MainAxisAlignment.CENTER, expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 ft.IconButton(ft.Icons.TUNE_ROUNDED, icon_size=20),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
