@@ -1,6 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, FONTS
-from Backend.ExcuteDatabase import supabase
+from Backend.Picar.ExcuteDatabase import supabase
 
 
 class WalletScreen(ft.View):
