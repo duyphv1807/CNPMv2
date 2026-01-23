@@ -9,6 +9,7 @@ from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
 from Frontend.Screens.WalletCheck import WalletScreen
 from Frontend.Screens.LinkBank import LinkBankScreen
+from Frontend.Screens.Account import AccountScreen
 
 async def main(page: ft.Page):
     page.title = "PiCar - Rental Vehicle System"
@@ -40,6 +41,8 @@ async def main(page: ft.Page):
             page.views.append(WalletScreen(page))
         elif page.route == "/LinkBank":
             page.views.append(LinkBankScreen(page))
+        elif page.route == "/Account":
+            page.views.append(AccountScreen(page))
         # Luôn await khi update trong hàm async
         page.update()
 
