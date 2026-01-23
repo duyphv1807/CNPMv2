@@ -1,10 +1,10 @@
 from flask import request, jsonify
-from . import app
+from Backend.Picar import app
 from .Services.LoginFunctional import login_logic
 from .Services.RegisterFunctional import register_logic
 from .Model.OTP import OTP
 from .Services.AuthService import AuthService
-
+from .Services.Location import locate_logic
 
 
 @app.route("/api/login", methods=["POST"])
@@ -125,3 +125,17 @@ def handle_verify_otp():
             "status": "error",
             "message": "Lỗi hệ thống khi xác thực mã"
         }), 500
+
+
+@app.route('/api/handle-locate', methods=['POST'])
+def handle_locate():
+    data = request.json
+    # Frontend sẽ gửi lên trạng thái cấp quyền và tọa độ thô
+    access = data.get('access')
+    lat = data.get('lat')
+    lng = data.get('lng')
+
+    # Gọi hàm xử lý trong Service Backend
+    result = locate_logic(access, lat, lng)
+
+    return jsonify(result)

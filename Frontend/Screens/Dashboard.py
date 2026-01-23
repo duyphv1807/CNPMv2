@@ -1,7 +1,8 @@
 import flet as ft
 from Frontend.Style import COLORS
 from datetime import datetime, timedelta
-import time
+from Frontend.Services.APIService import ApiService
+import flet_geolocator as fg
 
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
@@ -17,6 +18,9 @@ class DashboardScreen(ft.View):
         self.rental_mode = "self-driving"
         self.selected_category = "Car"
         self.category_buttons = {}
+
+        self.geolocator = fg.Geolocator()
+        page.overlay.append(self.geolocator)
 
         # MẶC ĐỊNH: Nhận xe bây giờ, Trả xe sau 1 ngày
         self.start_date = datetime.now()
@@ -122,7 +126,7 @@ class DashboardScreen(ft.View):
 
                                 ft.Container(height=5),
                                 ft.FilledButton(
-                                    content=ft.Text("Đặt xe ngay", size=16, weight=ft.FontWeight.BOLD, color="#FFFFFF"),
+                                    content=ft.Text("Search", size=16, weight=ft.FontWeight.BOLD, color="#FFFFFF"),
                                     width=float("inf"), height=45,
                                     style=ft.ButtonStyle(bgcolor=COLORS["primary"],
                                                          shape=ft.RoundedRectangleBorder(radius=12)),
@@ -367,31 +371,37 @@ class DashboardScreen(ft.View):
         self.end_date_picker.open = True
         self.page.update()
 
-    def handle_location_click(self, e):
-        print(">>> Đang chạy hàm xử lý...")
-
-        # Bước 1: Hiện trạng thái chờ
-        self.location_text.value = "Đang xin quyền truy cập..."
-        self.location_text.color = COLORS["primary"]
+    async def handle_location_click(self, e):  # Thêm async ở đây
+        print(">>> Đang kích hoạt lấy vị trí...")
+        self.location_text.value = "Đang xin quyền GPS..."
         self.page.update()
-
-        # Bước 2: Nghỉ 1 giây để mắt người kịp thấy sự thay đổi
-        time.sleep(1)
 
         try:
-            # Giả lập lấy tọa độ thành công
-            lat, lng = 10.7626, 106.6601
+            # BẮT BUỘC: Phải có await để đợi phần cứng trả về tọa độ thực
+            pos = await self.geolocator.get_current_position()
 
-            # Bước 3: Cập nhật kết quả cuối
-            self.location_text.value = "Quận 1, TP. Hồ Chí Minh"
-            self.location_text.color = "#333333"
-            print(">>> Đã cập nhật UI thành công")
+            if pos:
+                print(f">>> Đã lấy được tọa độ: {pos.latitude}, {pos.longitude}")
+
+                # Thực hiện nguyên tắc: Gọi API request lên Backend
+                # Nếu hàm locate_api của bạn cũng dùng requests (đồng bộ),
+                # bạn có thể gọi bình thường hoặc chuyển sang httpx để dùng async
+                result = ApiService.locate_api(True, pos.latitude, pos.longitude)
+
+                if result and result.get("status") == "success":
+                    self.location_text.value = result.get("display_name")
+                    self.location_text.color = "#333333"
+                else:
+                    self.location_text.value = "Server từ chối xử lý"
+            else:
+                self.location_text.value = "Không thể lấy tọa độ"
 
         except Exception as ex:
-            self.location_text.value = "Lỗi xác định vị trí"
-            print(f">>> Lỗi: {ex}")
+            print(f">>> Lỗi thực thi: {ex}")
+            self.location_text.value = "Lỗi truy cập vị trí"
 
         self.page.update()
+
 
 # --- Chạy main ---
 async def main(page: ft.Page):

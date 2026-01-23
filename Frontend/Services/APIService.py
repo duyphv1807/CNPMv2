@@ -84,3 +84,20 @@ class ApiService:
                 "status": "error",
                 "message": f"Lỗi không xác định: {str(e)}"
             }
+    @staticmethod
+    def locate_api(access_status, lat, lng):
+        """
+        Gửi yêu cầu vị trí lên Backend thông qua phương thức POST.
+        """
+        try:
+            response = requests.post(
+                f"{BASE_URL}/handle-locate",
+                json={
+                    "access": access_status,
+                    "lat": lat,
+                    "lng": lng
+                }
+            )
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

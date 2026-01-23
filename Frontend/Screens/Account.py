@@ -4,140 +4,213 @@ import shutil
 import tkinter as tk
 from tkinter import filedialog
 from datetime import date, datetime
-from Backend.Helpers import update_user_profile, change_password
+from Backend.Picar.ExcuteDatabase import get_current_user
+from Backend.Picar.Services.ChangeUserInfoFunctional import change_password, update_user_profile
+
 from Frontend.Style import COLORS
+
 
 class AccountScreen(ft.View):
     def __init__(self, page: ft.Page):
-        super().__init__(
-            route="/Account",
-            bgcolor=COLORS["bg"],
-            padding=0
+        super().__init__(route="/Account", bgcolor=COLORS["bg"], padding=0)
+
+
+        # ===== USER =====
+        user = get_current_user() or {}
+        self.user_id = user.get("UserID")
+        self.avatar_path = user.get("Avatar") or "assets/default_avatar.png"
+        self.dob_value = user.get("DateOfBirth", "")
+
+        # ===== INPUTS =====
+        self.fullname_input = ft.TextField(
+            label="Full name",
+            value=user.get("FullName", ""),
         )
-        try:
-            user_data = self.page.session.store.get("user_data")
-        except:
-            user_data = None
 
-        if not user_data:
-            user_data = {"FullName": "Guest", "id": "0"}
+        self.email_input = ft.TextField(
+            label="Email",
+            value=user.get("Email", ""),
+        )
 
-        self.user_id = user_data.get("id") or user_data.get("ID")
-        self.avatar_path = user_data.get("Avatar") or "assets/default_avatar.png"
-        self.license_image_path = user_data.get("DrivingLicense")
-        self.dob_value = user_data.get("DateOfBirth")
+        self.dob_input = ft.TextField(
+            label="Date of birth",
+            value=self.dob_value,
+            read_only=True,
+            suffix_icon=ft.Icons.CALENDAR_MONTH,
+            on_click=self.open_dob_dialog,
+        )
+        # ===== DOB DROPDOWN (GIỐNG REGISTER) =====
+        dropdown_style = {
+            "menu_height": 450,
+            "text_style": ft.TextStyle(weight=ft.FontWeight.BOLD),
+        }
 
-        # --- UI COMPONENTS ---
+        self.sel_day = ft.Dropdown(
+            label="Ngày",
+            width=120,
+            **dropdown_style,
+            options=[ft.dropdown.Option(str(i).zfill(2)) for i in range(1, 32)]
+        )
+
+        self.sel_month = ft.Dropdown(
+            label="Tháng",
+            width=120,
+            **dropdown_style,
+            options=[ft.dropdown.Option(str(i).zfill(2)) for i in range(1, 13)]
+        )
+
+        self.sel_year = ft.Dropdown(
+            label="Năm",
+            width=120,
+            **dropdown_style,
+            options=[ft.dropdown.Option(str(i)) for i in range(1950, 2027)]
+        )
+
+        self.date_dialog = ft.AlertDialog(
+            title=ft.Text("Chọn ngày sinh", weight=ft.FontWeight.BOLD),
+            content=ft.Row(
+                [self.sel_day, self.sel_month, self.sel_year],
+                tight=True,
+            ),
+            actions=[
+                ft.TextButton("Xác nhận", on_click=self.confirm_dob),
+                ft.TextButton("Hủy", on_click=self.close_dob_dialog),
+            ],
+        )
+
+        # ===== AVATAR =====
         self.avatar_view = ft.Image(
             src=self.avatar_path,
-            width=120,
-            height=120,
-            fit="cover",
+            width=90,
+            height=90,
+            fit=ft.BoxFit.COVER,
         )
 
-        self.avatar_circle = ft.Container(
-            width=120,
-            height=120,
-            border_radius=ft.BorderRadius.all(60),
+        avatar = ft.Container(
+            width=90,
+            height=90,
+            border_radius=45,
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            border=ft.Border.all(2, ft.Colors.GREY_400),
+            border=ft.Border.all(2, COLORS["primary"]),
             content=self.avatar_view,
             on_click=self.pick_avatar,
         )
 
-        self.fullname = ft.TextField(
-            label="Họ tên",
-            width=350,
-            value=user_data.get("FullName", ""),
-            border_radius=ft.BorderRadius.all(8)
-        )
-
-        self.email = ft.TextField(
-            label="Email",
-            width=350,
-            value=user_data.get("Email", ""),
-            border_radius=ft.BorderRadius.all(8)
-        )
-
-        self.dob_text = ft.Text(
-            value=self.dob_value if self.dob_value else "Chưa chọn ngày sinh",
-            size=14,
-        )
-
-        self.date_picker = ft.DatePicker(
-            on_change=self.on_date_selected,
-        )
-        page.overlay.append(self.date_picker)
-
-        self.dob_picker = ft.Container(
-            width=350,
-            padding=ft.Padding(12, 12, 12, 12),
-            border=ft.Border.all(1, ft.Colors.GREY_400),
-            border_radius=ft.BorderRadius.all(8),
+        # ===== HEADER =====
+        header = ft.Container(
+            padding=ft.Padding(20, 40, 20, 20),
             content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-                    self.dob_text,
-                    ft.Icon(ft.Icons.CALENDAR_MONTH),
+                [
+                    avatar,
+                    ft.Column(
+                        [
+                            ft.Text("Account", size=13, color=COLORS["muted"]),
+                            ft.Text(
+                                self.fullname_input.value or "Guest",
+                                size=20,
+                                weight=ft.FontWeight.BOLD,
+                                color=COLORS["primary"],
+                            ),
+                        ],
+                        spacing=4,
+                    ),
                 ],
+                spacing=15,
             ),
-            on_click=lambda _: self.show_picker(),
         )
 
-        self.license_text = ft.Text(
-            value="Đã cập nhật ảnh GPLX" if self.license_image_path else "Chưa tải ảnh GPLX",
-            size=13,
-            color=ft.Colors.GREY,
+        # ===== INFO CARD =====
+        info_card = self.card(
+            ft.Column(
+                spacing=12,
+                controls=[
+                    self.fullname_input,
+                    self.email_input,
+                    self.dob_input,
+                    ft.Divider(),
+                    ft.FilledButton(
+                        content="Edit profile",
+                        icon=ft.Icons.SAVE,
+                        expand=True,
+                        on_click=self.save_profile,
+                    ),
+                ],
+            )
         )
 
-        # FIX: Sử dụng tham số 'text' thay vì 'content' nếu là chuỗi đơn thuần 
-        # để tránh lỗi TypeError trên bản Flet cũ
-        self.license_button = ft.FilledButton(
-            content="Cập nhật ảnh GPLX",
-            icon=ft.Icons.CAMERA_ALT,
-            on_click=self.pick_license_image,
-            width=350,
+        # ===== PASSWORD =====
+        self.old_pw = ft.TextField(
+            label="Current password",
+            password=True,
+            can_reveal_password=True,
         )
 
-        self.old_pw = ft.TextField(label="Mật khẩu cũ", password=True, can_reveal_password=True, width=350)
-        self.new_pw = ft.TextField(label="Mật khẩu mới", password=True, can_reveal_password=True, width=350)
+        self.new_pw = ft.TextField(
+            label="New password",
+            password=True,
+            can_reveal_password=True,
+        )
+
         self.password_panel = ft.Column(
             visible=False,
+            spacing=10,
             controls=[
                 self.old_pw,
                 self.new_pw,
-                ft.FilledButton("Xác nhận đổi mật khẩu", on_click=self.handle_change_password, width=350),
+                ft.FilledButton(
+                    content="Save password",
+                    icon=ft.Icons.SAVE,
+                    on_click=self.handle_change_password,
+                ),
             ],
         )
 
+        security_card = self.card(
+            ft.Column(
+                spacing=10,
+                controls=[
+                    ft.Text("Security", weight=ft.FontWeight.BOLD),
+                    ft.FilledButton(
+                        content="Change password",
+                        icon=ft.Icons.LOCK,
+                        expand=True,
+                        on_click=self.toggle_password_panel,
+                    ),
+                    self.password_panel,
+                ],
+            )
+        )
+
+        # ===== NAV BAR =====
+        nav = ft.NavigationBar(
+            selected_index=4,
+            height=65,
+            destinations=[
+                ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
+                ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
+                ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
+                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
+            ],
+            on_change=self.on_nav_change,
+        )
+
+        # ===== LAYOUT =====
         self.controls = [
             ft.Row(
                 expand=True,
                 alignment=ft.MainAxisAlignment.CENTER,
                 controls=[
                     ft.Container(
-                        width=390,
-                        padding=ft.Padding(20, 20, 20, 20),
+                        width=380,
                         content=ft.Column(
-                            scroll=ft.ScrollMode.AUTO,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=15,
+                            spacing=0,
                             controls=[
-                                ft.Text("Quản lý tài khoản", size=22, weight=ft.FontWeight.BOLD),
-                                self.avatar_circle,
-                                self.fullname,
-                                self.dob_picker,
-                                self.email,
-                                ft.Divider(height=10),
-                                self.license_button,
-                                self.license_text,
-                                ft.Divider(height=10),
-                                ft.OutlinedButton("Đổi mật khẩu", icon=ft.Icons.LOCK,
-                                                  on_click=self.toggle_password_panel, width=350),
-                                self.password_panel,
-                                ft.FilledButton("Lưu thông tin", icon=ft.Icons.SAVE, on_click=self.save_profile,
-                                                width=350, bgcolor=COLORS["primary"]),
-                                ft.Container(height=20)
+                                header,
+                                info_card,
+                                security_card,
+                                ft.Container(expand=True),
+                                nav,
                             ],
                         ),
                     )
@@ -145,106 +218,147 @@ class AccountScreen(ft.View):
             )
         ]
 
-    def show_picker(self):
-        self.date_picker.open = True
+    # ===== UI HELPERS =====
+    def card(self, content):
+        return ft.Container(
+            margin=ft.Margin.only(left=20, right=20, bottom=15),
+            padding=20,
+            bgcolor="white",
+            border_radius=20,
+            shadow=ft.BoxShadow(
+                blur_radius=15,
+                color=ft.Colors.with_opacity(0.1, "black"),
+            ),
+            content=content,
+        )
+
+    def open_dob_dialog(self, e):
+        # add dialog vào overlay nếu chưa có
+        if self.date_dialog not in self.page.overlay:
+            self.page.overlay.append(self.date_dialog)
+
+        # nếu đã có DOB thì set lại dropdown
+        if self.dob_input.value:
+            try:
+                y, m, d = self.dob_input.value.split("-")
+                self.sel_year.value = y
+                self.sel_month.value = m
+                self.sel_day.value = d
+            except:
+                pass
+
+        self.date_dialog.open = True
         self.page.update()
 
-    def on_date_selected(self, e):
-        if e.control.value:
-            self.dob_value = e.control.value.strftime("%Y-%m-%d")
-            self.dob_text.value = self.dob_value
-            self.page.update()
+    def close_dob_dialog(self, e=None):
+        self.date_dialog.open = False
+        self.page.update()
 
-    def pick_avatar(self, _):
-        path = self.open_file("Chọn ảnh đại diện")
-        if path:
-            os.makedirs("assets/avatars", exist_ok=True)
-            ext = os.path.splitext(path)[1]
-            new_path = f"assets/avatars/{self.user_id}{ext}"
-            shutil.copy(path, new_path)
-            self.avatar_path = new_path
-            self.avatar_view.src = new_path
-            self.page.update()
+    def confirm_dob(self, e):
+        if self.sel_day.value and self.sel_month.value and self.sel_year.value:
+            date_str = f"{self.sel_year.value}-{self.sel_month.value}-{self.sel_day.value}"
+            try:
+                datetime.strptime(date_str, "%Y-%m-%d")
+                self.dob_input.value = date_str
+                self.dob_value = date_str
+                self.close_dob_dialog()
+            except ValueError:
+                self.show_error("Ngày sinh không hợp lệ")
 
-    def pick_license_image(self, _):
-        path = self.open_file("Chọn ảnh GPLX")
-        if path:
-            os.makedirs("assets/licenses", exist_ok=True)
-            ext = os.path.splitext(path)[1]
-            new_path = f"assets/licenses/{self.user_id}{ext}"
-            shutil.copy(path, new_path)
-            self.license_image_path = new_path
-            self.license_text.value = "Đã cập nhật ảnh GPLX"
-            self.page.update()
+    def calc_age(self):
+        dob = datetime.strptime(self.dob_value, "%Y-%m-%d").date()
+        today = date.today()
+        return today.year - dob.year - (
+            (today.month, today.day) < (dob.month, dob.day)
+        )
 
+    # ===== FILE PICK =====
     @staticmethod
     def open_file(title):
         root = tk.Tk()
         root.withdraw()
         root.attributes("-topmost", True)
-        path = filedialog.askopenfilename(parent=root, title=title, filetypes=[("Image files", "*.jpg *.jpeg *.png")])
+        path = filedialog.askopenfilename(
+            title=title,
+            filetypes=[("Image files", "*.jpg *.jpeg *.png")],
+        )
         root.destroy()
         return path
 
+    def pick_avatar(self, _):
+        path = self.open_file("Choose avatar")
+        if not path:
+            return
+        os.makedirs("assets/avatars", exist_ok=True)
+        ext = os.path.splitext(path)[1]
+        new_path = f"assets/avatars/{self.user_id}{ext}"
+        shutil.copy(path, new_path)
+        self.avatar_view.src = new_path
+        self.avatar_path = new_path
+        self.page.update()
+
+    # ===== SAVE PROFILE =====
     def save_profile(self, _):
+        self.dob_value = self.dob_input.value
+
         if not self.dob_value:
-            self.show_snack("Vui lòng chọn ngày sinh", True)
+            self.show_error("Date of birth is required")
             return
 
-        try:
-            dob = datetime.strptime(self.dob_value, "%Y-%m-%d").date()
-            age = (date.today() - dob).days // 365
-            if age < 18:
-                self.show_snack("Bạn phải đủ 18 tuổi", True)
-                return
-        except Exception:
-            self.show_snack("Định dạng ngày sinh không hợp lệ", True)
+        if self.calc_age() < 18:
+            self.show_error("User must be at least 18 years old")
             return
 
         update_user_profile(
             self.user_id,
             {
-                "FullName": self.fullname.value,
+                "FullName": self.fullname_input.value,
+                "Email": self.email_input.value,
                 "DateOfBirth": self.dob_value,
-                "Email": self.email.value,
                 "Avatar": self.avatar_path,
-                "DrivingLicense": self.license_image_path,
-            }
+            },
         )
 
-        current_user = self.page.session.store.get("user_data")
-        if current_user:
-            current_user.update({
-                "FullName": self.fullname.value,
-                "Avatar": self.avatar_path,
-                "DateOfBirth": self.dob_value
-            })
-            self.page.session.store.set("user_data", current_user)
+        self.show_success("Profile saved successfully")
+        self.page.go("/Account")
 
-        self.show_snack("Lưu thông tin thành công!")
-
+    # ===== PASSWORD =====
     def toggle_password_panel(self, _):
         self.password_panel.visible = not self.password_panel.visible
         self.page.update()
 
     def handle_change_password(self, _):
-        if change_password(self.user_id, self.old_pw.value, self.new_pw.value):
-            self.show_snack("Đổi mật khẩu thành công!")
-            self.password_panel.visible = False
+        ok = change_password(
+            self.user_id,
+            self.old_pw.value,
+            self.new_pw.value,
+        )
+        if ok:
+            self.show_success("Password changed successfully")
         else:
-            self.show_snack("Mật khẩu cũ không đúng", True)
-        self.page.update()
+            self.show_error("Incorrect current password")
 
-    def show_snack(self, msg, is_error=False):
-        self.page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor="red" if is_error else "green")
+    # ===== NAV =====
+    def on_nav_change(self, e):
+        routes = ["/Home", "/Chat", "/Trip", "/Support", "/Account"]
+        self.page.go(routes[e.control.selected_index])
+
+    # ===== TOAST =====
+    def show_error(self, msg):
+        self.page.snack_bar = ft.SnackBar(ft.Text(msg))
         self.page.snack_bar.open = True
         self.page.update()
 
+    def show_success(self, msg):
+        self.page.snack_bar = ft.SnackBar(ft.Text(msg))
+        self.page.snack_bar.open = True
+        self.page.update()
+
+
 def main(page: ft.Page):
-    # Dùng .set() thay vì .store.set()
-    page.session.store.set("user_data", {"FullName": "Test User", "id": "1"})
     page.views.append(AccountScreen(page))
-    page.update()
+    page.go("/Account")
+
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)

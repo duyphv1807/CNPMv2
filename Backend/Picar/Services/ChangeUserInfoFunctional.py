@@ -17,3 +17,46 @@ def change_password(user_id, old_password, new_password):
     except Exception as e:
         print(f"Error: {e}")
         return False
+
+def update_user_profile(user_id, data: dict):
+    """
+    Cập nhật thông tin người dùng:
+    - Tên
+    - Ngày sinh
+    - GPLX
+    - Email
+    - Ảnh đại diện
+
+    """
+    try:
+        payload = {}
+
+        # Chỉ update field nào có truyền lên
+        if "FullName" in data:
+            payload["FullName"] = data["FullName"]
+
+        if "DateOfBirth" in data:
+            payload["DateOfBirth"] = data["DateOfBirth"]
+
+        if "DrivingLicense" in data:
+            payload["DrivingLicense"] = data["DrivingLicense"]
+
+        if "Email" in data:
+            payload["Email"] = data["Email"]
+
+        if "Avatar" in data:
+            payload["Avatar"] = data["Avatar"]
+
+        if not payload:
+            return False
+
+        supabase.table("User_Admin") \
+            .update(payload) \
+            .eq("UserID", user_id) \
+            .execute()
+
+        return True
+
+    except Exception as e:
+        print(f"[ERROR] update_user_profile: {e}")
+        return False

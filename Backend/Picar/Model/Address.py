@@ -1,4 +1,4 @@
-class VehicleAddress:
+class Address:
     def __init__(self, detail, ward_commune, province_city, latitude, longitude):
         # 1. Số nhà, đường, xóm...
         self.detail = detail
