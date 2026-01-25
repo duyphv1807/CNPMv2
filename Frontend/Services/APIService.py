@@ -4,7 +4,10 @@ import requests
 
 SERVER_IP = "http://127.0.0.1:5000/api" #đoạn này có thể thay đổi
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 2443bfd022fff62c4f665e4d1b7696db2ca0d02c
 BASE_URL = SERVER_IP
 class ApiService:
     @staticmethod
@@ -180,7 +183,7 @@ class ApiService:
                 "full_name": payload.get("full_name"),
                 "email": payload.get("email"),
                 "phone_number": payload.get("phone"),  # Khớp với cột PhoneNumber
-                "dob": payload.get("dob"),
+                "DateOfBirth": payload.get("dob"),
                 "password": payload.get("password")
             }
             response = requests.post(url, json=formatted_payload, timeout=10)

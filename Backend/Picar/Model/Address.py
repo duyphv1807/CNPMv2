@@ -3,7 +3,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from Backend.Picar.ExcuteDatabase import supabase
 class Address:
-    def __init__(self, detail, commune, city, latitude, longitude):
+    def __init__(self, detail, commune, city, latitude = None, longitude = None):
         # 1. Số nhà, đường, xóm...
         self.detail = detail
 
@@ -42,10 +42,18 @@ class Address:
     def city(self, value): self.__city = value
 
     @lat.setter
-    def lat(self, value): self.__lat = float(value)
+    def lat(self, value):
+        if value is None:
+            self.__lat = None
+        else:
+            self.__lat = float(value)
 
     @lng.setter
-    def lng(self, value): self.__lng = float(value)
+    def lng(self, value):
+        if value is None:
+            self.__lng = None
+        else:
+            self.__lng = float(value)
 
     def get_full_address(self):
         """Định dạng địa chỉ chuẩn 2025: [Chi tiết], [Cấp Xã], [Cấp Tỉnh]"""

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from Frontend.Services.APIService import ApiService
 import flet_geolocator as fg
 
+
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -54,13 +55,14 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
+                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
             height=65,
-            on_change = self.on_nav_change
+            on_change=self.on_nav_change
         )
+
 
         # 1. Header
         self.header = ft.Container(
@@ -205,7 +207,7 @@ class DashboardScreen(ft.View):
         elif index == 2:
             self.page.go("/Trip")
         elif index == 3:
-            self.page.go("/Notification")
+            self.page.go("/Support")
         elif index == 4:
             # Chuyển hướng sang route Account
             self.page.go("/Account")
@@ -435,6 +437,20 @@ class DashboardScreen(ft.View):
             self.location_text.value = "Lỗi truy cập vị trí"
 
         self.page.update()
+    def on_nav_change(self, e):
+        index = e.control.selected_index
+
+        if index == 0:
+            self.page.go("/Dashboard")
+        elif index == 1:
+            self.page.go("/Chat")
+        elif index == 2:
+            self.page.go("/Trip")
+        elif index == 3:
+            self.page.go("/Notification")
+        elif index == 4:
+            self.page.go("/Account")
+
 
 
 # --- Chạy main ---

@@ -90,3 +90,30 @@ class VehicleMotorbike(Vehicle):
             "License Plate": self._license_plate
         })
         return info
+if __name__ == "__main__":
+    from Backend.Picar.Model.Address import Address
+    user1 = User("user","083222222222","18/07/2000","0377111111",
+                 "awr@gmai.com","091122222222","Abc123","https://supabase.com/dashboard/project/tdkmoeyqaejiucanbgdj/storage/files/buckets/Avatar/avatar.jpg",
+                 0,5,"USE7BK3OU6")
+    ad1 = Address(
+        detail="45 Trần Duy Hưng",
+        commune="Phường Trung Hòa, Cầu Giấy",
+        city="Hà Nội",
+    )
+    ad1.update_gps_from_address()
+    boat1 = VehicleMotorbike(
+        brand="VinFast Klara S",
+        color="White",
+        rental_price=190000,
+        rental_type="Daily",#Daily , Hourly
+        vehicle_document="MOTOBIKE_DOC_001",
+
+        status="AVAILABLE",
+        owner=user1,
+        image=r"D:\anh xe\vinfast_.webp",
+
+        engine_capacity=50,              # cc
+        transmission_type="AUTOMATIC",       # MANUAL | AUTOMATIC | SEMI-AUTOMATIC
+        license_plate="29M-666.66"
+    )
+    boat1.save_to_db(ad1)

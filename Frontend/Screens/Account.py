@@ -15,6 +15,7 @@ class AccountScreen(ft.View):
 
         self.user = {}
         self.user_id = None
+        self.balance_text_display = ft.Text("0 VNĐ", color="white")
         self.dob_value = ""
         self.avatar_path = ""
         # Tạo vòng xoay chờ
@@ -38,6 +39,12 @@ class AccountScreen(ft.View):
             result = ApiService.get_account_api(self.user_id)
             if result.get("status") == "success":
                 self.user = result.get("data")
+                wallet_res = supabase.table("Wallet").select("Balance").eq("UserID", self.user_id).execute()
+                if wallet_res.data:
+                    current_balance = wallet_res.data[0].get("Balance", 0)
+                    self.balance_text_display.value = f"{current_balance:,.0f} VNĐ"
+                # ----------------------------------
+                self.dob_value = result.get("DateOfBirth") or ""
                 self.page.session.store.set("user_data", self.user)
 
                 if hasattr(self, 'fullname_input'):
@@ -320,7 +327,7 @@ class AccountScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
+                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
             ],
             on_change=self.on_nav_change,
@@ -548,7 +555,6 @@ class AccountScreen(ft.View):
     def on_nav_change(self, e):
         routes = ["/Dashboard", "/Chat", "/Trip", "/Notification", "/Account"]
         self.page.go(routes[e.control.selected_index])
-
     def show_success(self, msg):
         self.page.snack_bar = ft.SnackBar(ft.Text(msg))
         self.page.snack_bar.open = True

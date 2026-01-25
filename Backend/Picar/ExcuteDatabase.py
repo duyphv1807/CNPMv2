@@ -96,3 +96,5 @@ def get_unique_filters():
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+

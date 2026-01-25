@@ -36,14 +36,22 @@ async def main(page: ft.Page):
             page.views.append(RegisterScreen3(page))
         elif page.route == "/Dashboard":
             page.views.append(DashboardScreen(page))
+        elif page.route == "/Chat":
+            page.views.append(ChatScreen())
         elif page.route == "/ForgotPassword":
             page.views.append(ForgotPasswordScreen(page))
         elif page.route == "/VerifyOTP":
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
             page.views.append(ResetPasswordScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
+        elif page.route == "/Account.py":
+            page.views.append(AccountScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
+
+
         elif page.route == "/Account":
             page.views.append(AccountScreen(page))
         elif page.route == "/Chat":
@@ -54,6 +62,8 @@ async def main(page: ft.Page):
             page.views.append(LinkBankScreen(page))
         elif page.route == "/TransactionHistory":
             page.views.append(TransactionHistoryScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
         elif page.route == "/Booking":
             page.views.append(BookingScreen(page))
         elif page.route == "/Notification":
