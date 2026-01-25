@@ -173,7 +173,17 @@ class ApiService:
     def update_account_api(payload):
         try:
             url = f"{BASE_URL}/update_account"
-            response = requests.post(url, json=payload, timeout=10)
+            # Đảm bảo payload gửi đi chứa đúng các key mà Backend mong đợi
+            # Frontend truyền: client -> Backend nhận: phone_number
+            formatted_payload = {
+                "user_id": payload.get("user_id"),
+                "full_name": payload.get("full_name"),
+                "email": payload.get("email"),
+                "phone_number": payload.get("phone"),  # Khớp với cột PhoneNumber
+                "dob": payload.get("dob"),
+                "password": payload.get("password")
+            }
+            response = requests.post(url, json=formatted_payload, timeout=10)
             return response.json()
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -182,13 +192,15 @@ class ApiService:
     def get_account_api(user_id):
         try:
             url = f"{BASE_URL}/account"
-            # Tăng timeout lên 10-15 giây để tránh lỗi 10054
+            # Gửi request lấy thông tin
             response = requests.post(url, json={"user_id": user_id}, timeout=15)
-            return response.json()
+            result = response.json()
+
+            # DEBUG: In ra để kiểm tra Backend trả về đủ cột chưa
+            print(f"--- API DEBUG (Get Account): {result} ---")
+            return result
         except Exception as e:
             return {"status": "error", "message": f"Kết nối thất bại: {str(e)}"}
-
-    # Hàm lấy địa chỉ từ tọa độ (Reverse Geocoding)
     @staticmethod
     def locate_api(use_coords, lat=None, lng=None):
         try:
