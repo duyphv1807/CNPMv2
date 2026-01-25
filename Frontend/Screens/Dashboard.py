@@ -54,7 +54,7 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
@@ -205,7 +205,7 @@ class DashboardScreen(ft.View):
         elif index == 2:
             self.page.go("/Trip")
         elif index == 3:
-            self.page.go("/Support")
+            self.page.go("/Notification")
         elif index == 4:
             # Chuyển hướng sang route Account
             self.page.go("/Account")

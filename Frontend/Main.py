@@ -14,7 +14,7 @@ from Screens.LinkBank import LinkBankScreen
 from Screens.TransactionHistory import TransactionHistoryScreen
 from Screens.WalletCheck import WalletScreen
 from Screens.NotificationScreen import NotificationScreen
-
+from Screens.Booking import BookingScreen
 
 async def main(page: ft.Page):
     page.title = "PiCar - Rental Vehicle System"
@@ -44,8 +44,6 @@ async def main(page: ft.Page):
             page.views.append(ResetPasswordScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
-
-
         elif page.route == "/Account":
             page.views.append(AccountScreen(page))
         elif page.route == "/Chat":
@@ -56,7 +54,10 @@ async def main(page: ft.Page):
             page.views.append(LinkBankScreen(page))
         elif page.route == "/TransactionHistory":
             page.views.append(TransactionHistoryScreen(page))
-
+        elif page.route == "/Booking":
+            page.views.append(BookingScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
         # Luôn await khi update trong hàm async
         page.update()
 

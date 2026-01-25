@@ -320,7 +320,7 @@ class AccountScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
             ],
             on_change=self.on_nav_change,
@@ -546,7 +546,7 @@ class AccountScreen(ft.View):
 
     # ===== NAV =====
     def on_nav_change(self, e):
-        routes = ["/Dashboard", "/Chat", "/Trip", "/Support", "/Account"]
+        routes = ["/Dashboard", "/Chat", "/Trip", "/Notification", "/Account"]
         self.page.go(routes[e.control.selected_index])
 
     # ===== TOAST =====
