@@ -90,7 +90,7 @@ class LinkBankScreen(ft.View):
                                 ft.Row(
                                     alignment=ft.MainAxisAlignment.CENTER,
                                     controls=[
-                                        ft.Icon(ft.Icons.ACCOUNT_BALANCE, size=30),
+ft.Icon(ft.Icons.ACCOUNT_BALANCE, size=30),
                                         ft.Text(
                                             "Liên kết ngân hàng",
                                             size=22,

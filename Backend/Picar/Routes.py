@@ -179,3 +179,5 @@ async def handle_update_account():
     if success:
         return jsonify({"status": "success", "message": "Updated"})
     return jsonify({"status": "error", "message": "Update failed"}), 400
+
+

@@ -168,3 +168,18 @@ class AuthService:
             # In ra lỗi chi tiết nếu tên cột sai (ví dụ: FullName vs Full_Name)
             print(f"--- [SUPABASE ERROR]: {str(e)} ---")
             return False
+
+    @staticmethod
+    async def update_user(user_id, update_data):
+        try:
+            from Backend.Picar.ExcuteDatabase import supabase
+            # Thực hiện update vào bảng User_Admin
+            response = supabase.table("User_Admin") \
+                .update(update_data) \
+                .eq("UserID", user_id) \
+                .execute()
+
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"--- [SUPABASE ERROR]: {str(e)} ---")
+            return False

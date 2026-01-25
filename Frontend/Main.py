@@ -7,6 +7,7 @@ from Frontend.Screens.Dashboard import DashboardScreen
 from Frontend.Screens.ForgotPassword import ForgotPasswordScreen
 from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
+from Frontend.Screens.Search import SearchScreen
 from Screens.Account import AccountScreen
 
 
@@ -36,6 +37,8 @@ async def main(page: ft.Page):
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
             page.views.append(ResetPasswordScreen(page))
+        elif page.route == "/Search":
+            page.views.append(SearchScreen(page))
         elif page.route == "/Account":
             page.views.append(AccountScreen(page))
         # Luôn await khi update trong hàm async
@@ -44,7 +47,6 @@ async def main(page: ft.Page):
     page.on_route_change = route_change
     # Sử dụng push_route chuẩn (không cần _async ở bản 0.80.2)
     await page.push_route("/Login")
-
 
 if __name__ == "__main__":
     # Dùng ft.run để xóa cảnh báo Deprecated
