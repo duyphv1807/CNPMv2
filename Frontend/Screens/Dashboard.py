@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from Frontend.Services.APIService import ApiService
 import flet_geolocator as fg
 
+
 class DashboardScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -54,13 +55,14 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED,label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
             height=65,
-            on_change = self.on_nav_change
+            on_change=self.on_nav_change
         )
+
 
         # 1. Header
         self.header = ft.Container(
@@ -115,7 +117,7 @@ class DashboardScreen(ft.View):
                                         content=self.create_clickable_time_column(ft.Icons.LOGOUT_ROUNDED, "Ngày trả",
                                                                                   self.txt_end_val),
                                         on_click=self.open_end_picker  # Đổi sang hàm helper
-                                    ),
+),
                                 ], spacing=10),  # Đã đóng ngoặc vuông cho ft.Row
 
                                 ft.Container(height=5),
@@ -176,8 +178,8 @@ class DashboardScreen(ft.View):
                                     padding=ft.Padding.only(left=20, right=20, top=1, bottom=20),
                                     expand=True,  # Lấy phần diện tích còn lại
                                     content=ft.Column(
-                                        controls=[self.product_display],
-                                        scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
+                                    controls=[self.product_display],
+scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
                                     )
                                 ),
 
@@ -194,21 +196,6 @@ class DashboardScreen(ft.View):
         self.update_product_list("Car")
 
     # --- HELPER METHODS ---
-    def on_nav_change(self, e):
-        # Lấy index của icon vừa bấm
-        index = e.control.selected_index
-
-        if index == 0:
-            self.page.go("/Dashboard")
-        elif index == 1:
-            self.page.go("/Chat")
-        elif index == 2:
-            self.page.go("/Trip")
-        elif index == 3:
-            self.page.go("/Support")
-        elif index == 4:
-            # Chuyển hướng sang route Account
-            self.page.go("/Account")
 
     def create_clickable_time_column(self, icon, label, text_obj):
         return ft.Column([
@@ -259,9 +246,11 @@ class DashboardScreen(ft.View):
                 self.end_date = temp_end
                 self.page.session.store.set("end_date", self.end_date.isoformat())
                 self.txt_end_val.value = self.end_date.strftime("%H:%M - %d/%m/%Y")
+
+                self.page.update()
+
+
             self.page.update()
-
-
     def create_mode_tab(self, text, mode, icon, active):
         is_left = (mode == "self-driving")
         icon_ctrl = ft.Icon(icon, size=18, color="#FFFFFF" if active else COLORS["primary"])
@@ -388,8 +377,8 @@ class DashboardScreen(ft.View):
                             icon=ft.Icons.ARROW_FORWARD_IOS,
                             icon_size=14,
                             icon_color="#CCCCCC"
-                        )
-                    ])
+)
+])
                 )
             )
 
@@ -435,6 +424,20 @@ class DashboardScreen(ft.View):
             self.location_text.value = "Lỗi truy cập vị trí"
 
         self.page.update()
+    def on_nav_change(self, e):
+        index = e.control.selected_index
+
+        if index == 0:
+            self.page.go("/Dashboard")
+        elif index == 1:
+            self.page.go("/Chat")
+        elif index == 2:
+            self.page.go("/Trip")
+        elif index == 3:
+            self.page.go("/Notification")
+        elif index == 4:
+            self.page.go("/Account")
+
 
 
 # --- Chạy main ---

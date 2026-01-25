@@ -56,6 +56,8 @@ async def main(page: ft.Page):
             page.views.append(LinkBankScreen(page))
         elif page.route == "/TransactionHistory":
             page.views.append(TransactionHistoryScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
 
         # Luôn await khi update trong hàm async
         page.update()

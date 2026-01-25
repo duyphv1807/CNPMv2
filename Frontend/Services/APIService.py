@@ -180,7 +180,7 @@ class ApiService:
                 "full_name": payload.get("full_name"),
                 "email": payload.get("email"),
                 "phone_number": payload.get("phone"),  # Khớp với cột PhoneNumber
-                "dob": payload.get("dob"),
+                "DateOfBirth": payload.get("dob"),
                 "password": payload.get("password")
             }
             response = requests.post(url, json=formatted_payload, timeout=10)

@@ -38,6 +38,7 @@ class AccountScreen(ft.View):
             result = ApiService.get_account_api(self.user_id)
             if result.get("status") == "success":
                 self.user = result.get("data")
+                self.dob_value = result.get("DateOfBirth") or ""
                 self.page.session.store.set("user_data", self.user)
 
                 if hasattr(self, 'fullname_input'):
@@ -320,7 +321,7 @@ class AccountScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
             ],
             on_change=self.on_nav_change,
