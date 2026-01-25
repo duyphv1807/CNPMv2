@@ -1,7 +1,7 @@
 from Backend.Picar.Model.User import User
 from Backend.Picar.ExcuteDatabase import supabase
 from Backend.Picar.Utils.GenerateID import generate_id
-
+from Backend.Picar.Model.Address import Address
 class Vehicle:
     # Danh sách các hạng bằng lái chuẩn tại Việt Nam
     LICENSE_TYPES = {
@@ -16,23 +16,21 @@ class Vehicle:
         "T1": "Bằng thuyền trưởng hạng 1 (Tàu lớn)"
     }
 
-    def __init__(self, brand: str, color: str, rental_price: float, rental_type: str = "Daily",
-                 vehicle_document: str = None, status: str = "Available", owner: any = None,
-                 image: str = None, vehicle_id: str = None):
+    def __init__(self, brand: str, color: str, rental_price: float,
+                 vehicle_document: str, status: str, owner: User, image: str, vehicle_id: str = None):
 
         self._vehicle_id = vehicle_id if vehicle_id else generate_id("VE")
-        self._owner = owner  # Lưu đối tượng User (OwnerID)
+        self._owner = owner  # Lưu toàn bộ đối tượng User là chủ xe
 
         # Gán thông qua setter để kiểm tra logic
         self.brand = brand
         self.rental_price = rental_price
-        self.rental_type = rental_type  # Bổ sung gán RentalType (Daily/Hourly)
         self.status = status
         self.color = color
         self.vehicle_document = vehicle_document
         self.image = image
 
-        # Thuộc tính sẽ được class con cụ thể hóa
+        # Thuộc tính sẽ được class con cụ thể hóa (Car gán B2, Motor gán A1...)
         self._required_license = "NONE"
 
     # --- GETTER/SETTER ---
@@ -107,15 +105,10 @@ class Vehicle:
             "Image": self.image
         }
 
-    def save_to_db(self, address_obj=None):
-        """
-        Lưu thông tin xe và địa chỉ vào Database.
-        address_obj: Đối tượng thuộc class VehicleAddress
-        """
+    def save_to_db(self, address_obj):
         from Backend.Picar.ExcuteDatabase import upload_image_to_storage
-
-        # 1. Xử lý Upload ảnh (giữ nguyên logic của bạn)
-        if self.image:
+        if self._image:
+            # Đặt tên file theo VehicleID để tránh trùng lặp
             public_url = upload_image_to_storage(
                 image_source=self.image,
                 filename=self._vehicle_id,
