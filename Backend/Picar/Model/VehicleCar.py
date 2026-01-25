@@ -25,17 +25,6 @@ class VehicleCar(Vehicle):
             image=image,
             vehicle_id=vehicle_id
         )
-        super().__init__(
-            brand=brand,
-            color=color,
-            rental_price=rental_price,
-            rental_type=rental_type,
-            vehicle_document=vehicle_document,
-            status=status,
-            owner=owner,
-            image=image,
-            vehicle_id=vehicle_id
-        )
         # 2. Thuộc tính riêng (Sử dụng protected _ để đồng bộ)
         self._model = model
         self._seating_capacity = seating_capacity
@@ -114,8 +103,36 @@ class VehicleCar(Vehicle):
             "Model": self._model,
             "Seats": f"{self._seating_capacity} chỗ",
             "Fuel": self._fuel_type,
-            "Transmission": self._transmission,
+            "TransmissionType": self._transmission,
             "Power": self._engine_power,
             "License Plate": self._license_plate
         })
         return info
+if __name__ == "__main__":
+    from Backend.Picar.Model.Address import Address
+    user1 = User("user","083222222222","18/07/2000","0377111111",
+                 "awr@gmai.com","091122222222","Abc123","https://supabase.com/dashboard/project/tdkmoeyqaejiucanbgdj/storage/files/buckets/Avatar/avatar.jpg",
+                 0,5,"USE7BK3OU6")
+    ad1 = Address(
+        detail="15 Võ Văn Kiệt",
+        commune="Phường An Hòa, Quận Ninh Kiều",
+        city="Cần Thơ",
+    )
+    ad1.update_gps_from_address()
+    boat1 = VehicleCar(
+        brand="Ford Everest",
+        color="Black",
+        rental_price=600000,
+        rental_type="Hourly",#Daily , Hourly
+        vehicle_document="CAR_DOC_001",
+        status="AVAILABLE",
+        owner=user1,
+        image=r"D:\anh xe\OI1.webp ",
+        model="2021",
+        seating_capacity=7,
+        fuel_type="GASOLINE",
+        transmission="AUTOMATIC",
+        engine_power="201HP",
+        license_plate="65A-666.66"
+    )
+    boat1.save_to_db(ad1)

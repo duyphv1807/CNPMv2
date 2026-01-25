@@ -92,21 +92,28 @@ class VehicleTruck(Vehicle):
         })
         return
 if __name__ == "__main__":
+    from Backend.Picar.Model.Address import Address
     user1 = User("user","083222222222","18/07/2000","0377111111",
                  "awr@gmai.com","091122222222","Abc123","https://supabase.com/dashboard/project/tdkmoeyqaejiucanbgdj/storage/files/buckets/Avatar/avatar.jpg",
                  0,5,"USE7BK3OU6")
-
+    ad1 = Address(
+        detail="123 Nguyễn Văn Linh",
+        commune="Phường Tân Phong, Quận 7" ,
+        city="TP Hồ Chí Minh" ,
+    )
+    ad1.update_gps_from_address()
     boat1 = VehicleTruck(
-        brand="Suzuki",
-        color="White",
-        rental_price=500000,
+        brand="Hyundai Porter",
+        color="Silver",
+        rental_price=600000,
+        rental_type="Daily",#Daily , Hourly
         vehicle_document="TRUCK_DOC_001",
         status="AVAILABLE",
         owner=user1,
-        image=r"C:\Users\ASUS\OneDrive\Máy tính\bài tập\test\carry.jfif",
-        load_capacity=0.5,  # 500kg -> Bằng B2
-        engine_type="GASOLINE",
-        dimensions="2.5m x 1.3m x 1.3m",
-        license_plate="51C-123.45"
+        image=r"D:\anh xe\R.jpg",
+        load_capacity=1.5,  # 500kg -> Bằng B2
+        engine_type="DIESEL",
+        dimensions="3.2m x 1.6m x 1.6m",
+        license_plate="51C-554.55"
     )
-    boat1.save_to_db()
+    boat1.save_to_db(ad1)

@@ -9,7 +9,7 @@ from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
 from Frontend.Screens.ChatScreen import ChatScreen
 from Screens.NotificationScreen import NotificationScreen
-
+from Frontend.Screens.Account import AccountScreen
 
 from Frontend.Screens.Search import SearchScreen
 
@@ -41,10 +41,10 @@ async def main(page: ft.Page):
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
             page.views.append(ResetPasswordScreen(page))
-
         elif page.route == "/Notification":
             page.views.append(NotificationScreen(page))
-
+        elif page.route == "/Account.py":
+            page.views.append(AccountScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
 
