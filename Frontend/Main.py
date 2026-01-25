@@ -7,7 +7,7 @@ from Frontend.Screens.Dashboard import DashboardScreen
 from Frontend.Screens.ForgotPassword import ForgotPasswordScreen
 from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
-from Frontend.Screens.Search import SearchScreen
+
 async def main(page: ft.Page):
     page.title = "PiCar - Rental Vehicle System"
     page.window_width = 393
@@ -34,8 +34,6 @@ async def main(page: ft.Page):
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
             page.views.append(ResetPasswordScreen(page))
-        elif page.route == "/Search":
-            page.views.append(SearchScreen(page))
 
         # Luôn await khi update trong hàm async
         page.update()

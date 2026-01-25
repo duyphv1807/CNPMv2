@@ -4,6 +4,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import bcrypt
+
+from Backend.Picar.ExcuteDatabase import supabase
 from Backend.Picar.Model.OTP import OTP
 
 class AuthService:
@@ -128,5 +130,44 @@ class AuthService:
 
         print("UPDATE RESULT:", result.data)
         return bool(result.data)
+    @staticmethod
+    async def get_user_by_id(user_id):
+        from Backend.Picar.ExcuteDatabase import supabase
 
+        res = (
+            supabase
+            .table("User_Admin")
+            .select("UserID, FullName, Email, PhoneNumber, DateOfBirth, Avatar")
+            .eq("UserID", user_id)
+            .single()
+            .execute()
+        )
 
+        if not res.data:
+            return None
+
+        return res.data
+#========UPDATE==============
+    @staticmethod
+    async def update_user(user_id, update_data):
+        try:
+            # Phải import supabase client từ file cấu hình của bạn
+            from Backend.Picar.ExcuteDatabase import supabase
+
+            # Thực hiện lệnh update vào bảng Users
+            # Lưu ý: Các key trong update_data phải khớp 100% với tên cột trong Supabase
+            response = supabase.table("Users") \
+                .update(update_data) \
+                .eq("UserID", user_id) \
+                .execute()
+
+            # Kiểm tra xem có dữ liệu trả về sau khi update không
+            if hasattr(response, 'data') and len(response.data) > 0:
+                print(f"--- Backend: Update thành công cho {user_id} ---")
+                return True
+
+            print(f"--- Backend: Không có dòng nào được update cho ID {user_id} ---")
+            return False
+        except Exception as e:
+            print(f"--- Backend: Lỗi Supabase: {str(e)} ---")
+            return False

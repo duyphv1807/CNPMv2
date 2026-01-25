@@ -58,7 +58,8 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
-            height=65
+            height=65,
+            on_change=self.on_nav_change  # ✅ THÊM DÒNG NÀY
         )
 
         # 1. Header
@@ -193,6 +194,13 @@ class DashboardScreen(ft.View):
         self.update_product_list("Car")
 
     # --- HELPER METHODS ---
+    def on_nav_change(self, e):
+        index = e.control.selected_index
+
+        if index == 0:
+            self.page.go("/Dashboard")
+        elif index == 4:  # Account
+            self.page.go("/Account")
 
     def create_clickable_time_column(self, icon, label, text_obj):
         return ft.Column([
