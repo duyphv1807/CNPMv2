@@ -1,7 +1,7 @@
 import requests
 
 # Địa chỉ IP của máy tính chạy Flask (Thay đổi theo IP máy bạn)
-SERVER_IP = "http://192.168.100.70:5000/api" #đoạn này có thể thay đổi
+SERVER_IP = "http://192.168.1.32:5000/api" #đoạn này có thể thay đổi
 BASE_URL = SERVER_IP
 class ApiService:
     @staticmethod
@@ -84,3 +84,32 @@ class ApiService:
                 "status": "error",
                 "message": f"Lỗi không xác định: {str(e)}"
             }
+
+    @staticmethod
+    def update_account_api(payload):
+        try:
+            # Thay đổi URL cho đúng với IP server Flask của bạn
+            response = requests.post(f"{BASE_URL}/update_account", json=payload)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def get_account_api(user_id):
+        """Lấy thông tin tài khoản từ backend"""
+        try:
+            url = f"{BASE_URL}/account"
+            response = requests.post(url, json={"user_id": user_id}, timeout=10)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": f"Kết nối thất bại: {str(e)}"}
+
+    @staticmethod
+    def update_account_api(payload):
+        """Cập nhật thông tin tài khoản"""
+        try:
+            url = f"{BASE_URL}/update_account"
+            response = requests.post(url, json=payload, timeout=10)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

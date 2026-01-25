@@ -130,44 +130,41 @@ class AuthService:
 
         print("UPDATE RESULT:", result.data)
         return bool(result.data)
+
     @staticmethod
     async def get_user_by_id(user_id):
-        from Backend.Picar.ExcuteDatabase import supabase
+        try:
+            # SỬA: Dùng bảng User_Admin và lấy đúng các cột
+            res = supabase.table("User_Admin") \
+                .select("UserID, FullName, Email, PhoneNumber, DateOfBirth, Avatar") \
+                .eq("UserID", user_id) \
+                .execute()
 
-        res = (
-            supabase
-            .table("User_Admin")
-            .select("UserID, FullName, Email, PhoneNumber, DateOfBirth, Avatar")
-            .eq("UserID", user_id)
-            .single()
-            .execute()
-        )
-
-        if not res.data:
+            if not res.data or len(res.data) == 0:
+                return None
+            return res.data[0]
+        except Exception as e:
+            print(f"--- [ERROR get_user_by_id]: {str(e)}")
             return None
 
-        return res.data
-#========UPDATE==============
+    #======== PHẦN FIX CẬP NHẬT TÀI KHOẢN ==============
     @staticmethod
     async def update_user(user_id, update_data):
         try:
-            # Phải import supabase client từ file cấu hình của bạn
-            from Backend.Picar.ExcuteDatabase import supabase
-
-            # Thực hiện lệnh update vào bảng Users
-            # Lưu ý: Các key trong update_data phải khớp 100% với tên cột trong Supabase
-            response = supabase.table("Users") \
+            # SỬA QUAN TRỌNG: Đổi Users thành User_Admin để khớp với DB
+            response = supabase.table("User_Admin") \
                 .update(update_data) \
                 .eq("UserID", user_id) \
                 .execute()
 
-            # Kiểm tra xem có dữ liệu trả về sau khi update không
-            if hasattr(response, 'data') and len(response.data) > 0:
-                print(f"--- Backend: Update thành công cho {user_id} ---")
+            if response.data:
+                print(f"--- [SUPABASE] Cập nhật thành công cho ID: {user_id} ---")
                 return True
 
-            print(f"--- Backend: Không có dòng nào được update cho ID {user_id} ---")
+            print(f"--- [SUPABASE] Không tìm thấy dòng nào để update cho ID: {user_id} ---")
             return False
+
         except Exception as e:
-            print(f"--- Backend: Lỗi Supabase: {str(e)} ---")
+            # In ra lỗi chi tiết nếu tên cột sai (ví dụ: FullName vs Full_Name)
+            print(f"--- [SUPABASE ERROR]: {str(e)} ---")
             return False

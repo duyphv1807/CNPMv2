@@ -1,11 +1,9 @@
 from flask import request, jsonify
-from . import app
-from .Services.LoginFunctional import login_logic
-from .Services.RegisterFunctional import register_logic
-from .Model.OTP import OTP
-from .Services.AuthService import AuthService
-
-
+from Backend.Picar import app
+from Backend.Picar.Services.LoginFunctional import login_logic
+from Backend.Picar.Services.RegisterFunctional import register_logic
+from Backend.Picar.Model.OTP import OTP
+from Backend.Picar.Services.AuthService import AuthService
 
 @app.route("/api/login", methods=["POST"])
 def handle_login():
@@ -125,3 +123,59 @@ def handle_verify_otp():
             "status": "error",
             "message": "Lỗi hệ thống khi xác thực mã"
         }), 500
+
+#====== ACCOUNT SECTION ==========
+
+@app.route("/api/account", methods=["POST"])
+async def handle_get_account():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return jsonify({"status": "error", "message": "Thiếu user_id"}), 400
+
+        # QUAN TRỌNG: Phải có await vì get_user_by_id là hàm async
+        # Nếu thiếu await, bạn sẽ bị lỗi "'coroutine' object has no attribute 'get'"
+        user = await AuthService.get_user_by_id(user_id)
+
+        if not user:
+            return jsonify({"status": "error", "message": "Không tìm thấy user"}), 404
+
+        # Trả về đúng cấu trúc mà Frontend đang chờ
+        return jsonify({
+            "status": "success",
+            "data": {
+                "UserID": user.get("UserID"),
+                "FullName": user.get("FullName"),
+                "Email": user.get("Email"),
+                "DOB": str(user.get("DOB")) if user.get("DOB") else "",
+                "Avatar": user.get("Avatar")
+            }
+        }), 200
+    except Exception as e:
+        print(f"Lỗi Backend /api/account: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/update_account", methods=["POST"])
+async def handle_update_account():
+    data = request.json
+    user_id = data.get("user_id")
+
+    # Ánh xạ dữ liệu khớp với tên cột trong Supabase User_Admin
+    db_data = {
+        "FullName": data.get("full_name"),
+        "Email": data.get("email"),
+        "PhoneNumber": data.get("client"),
+        "DateOfBirth": data.get("dob") if data.get("dob") else None
+    }
+
+    # Thêm pass nếu có
+    if data.get("password"):
+        db_data["Password"] = data.get("password")
+
+    success = await AuthService.update_user(user_id, db_data)
+    if success:
+        return jsonify({"status": "success", "message": "Updated"})
+    return jsonify({"status": "error", "message": "Update failed"}), 400
