@@ -1,5 +1,5 @@
 from Backend.Picar.Model.User import User
-from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.ExcuteDatabase import upload_image_to_storage
 from Backend.Picar.Utils.GenerateID import generate_id
 
 class Vehicle:
@@ -106,7 +106,7 @@ class Vehicle:
         }
 
     def save_to_db(self):
-        from Backend.Helpers import upload_image_to_storage
+        from Backend.Picar.ExcuteDatabase import supabase
         if self._image:
             # Đặt tên file theo VehicleID để tránh trùng lặp
             public_url = upload_image_to_storage(
