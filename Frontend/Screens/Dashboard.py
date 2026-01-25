@@ -116,8 +116,8 @@ class DashboardScreen(ft.View):
                                         expand=True,
                                         content=self.create_clickable_time_column(ft.Icons.LOGOUT_ROUNDED, "Ngày trả",
                                                                                   self.txt_end_val),
-on_click=self.open_end_picker  # Đổi sang hàm helper
-                                    ),
+                                        on_click=self.open_end_picker  # Đổi sang hàm helper
+),
                                 ], spacing=10),  # Đã đóng ngoặc vuông cho ft.Row
 
                                 ft.Container(height=5),
@@ -179,7 +179,7 @@ on_click=self.open_end_picker  # Đổi sang hàm helper
                                     expand=True,  # Lấy phần diện tích còn lại
                                     content=ft.Column(
                                     controls=[self.product_display],
-                                        scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
+scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
                                     )
                                 ),
 
@@ -251,9 +251,6 @@ on_click=self.open_end_picker  # Đổi sang hàm helper
 
 
             self.page.update()
-
-
-
     def create_mode_tab(self, text, mode, icon, active):
         is_left = (mode == "self-driving")
         icon_ctrl = ft.Icon(icon, size=18, color="#FFFFFF" if active else COLORS["primary"])
@@ -313,7 +310,7 @@ on_click=self.open_end_picker  # Đổi sang hàm helper
             padding=ft.Padding.symmetric(vertical=8, horizontal=12),
             border=ft.Border.all(1, "black" if is_selected else "#E0E0E0"),
             border_radius=12, # Bo góc mềm mại hơn một chút
-bgcolor="white",
+            bgcolor="white",
             animate=ft.Animation(300, ft.AnimationCurve.DECELERATE),
             on_click=lambda _: self.select_category(name)
         )
@@ -378,10 +375,10 @@ bgcolor="white",
                         ], expand=True, spacing=4),
                         ft.IconButton(
                             icon=ft.Icons.ARROW_FORWARD_IOS,
-icon_size=14,
+                            icon_size=14,
                             icon_color="#CCCCCC"
-                        )
-                    ])
+)
+])
                 )
             )
 

@@ -5,7 +5,7 @@ class ChatScreen(ft.View):
     def __init__(self):
         super().__init__(
             route="/Chat",
-            bgcolor="#E5E7EB",   # nền ngoài (desktop)
+            bgcolor="#E5E7EB",
             padding=0
         )
 

@@ -7,11 +7,14 @@ from Frontend.Screens.Dashboard import DashboardScreen
 from Frontend.Screens.ForgotPassword import ForgotPasswordScreen
 from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
-from Frontend.Screens.ChatScreen import ChatScreen
-from Screens.NotificationScreen import NotificationScreen
-from Frontend.Screens.Account import AccountScreen
-
 from Frontend.Screens.Search import SearchScreen
+from Screens.Account import AccountScreen
+from Screens.ChatScreen import ChatScreen
+from Screens.LinkBank import LinkBankScreen
+from Screens.TransactionHistory import TransactionHistoryScreen
+from Screens.WalletCheck import WalletScreen
+from Screens.NotificationScreen import NotificationScreen
+
 
 async def main(page: ft.Page):
     page.title = "PiCar - Rental Vehicle System"
@@ -47,6 +50,20 @@ async def main(page: ft.Page):
             page.views.append(AccountScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
+
+
+        elif page.route == "/Account":
+            page.views.append(AccountScreen(page))
+        elif page.route == "/Chat":
+            page.views.append(ChatScreen())
+        elif page.route == "/Wallet":
+            page.views.append(WalletScreen(page))
+        elif page.route == "/LinkBank":
+            page.views.append(LinkBankScreen(page))
+        elif page.route == "/TransactionHistory":
+            page.views.append(TransactionHistoryScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
 
         # Luôn await khi update trong hàm async
         page.update()

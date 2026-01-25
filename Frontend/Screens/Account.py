@@ -15,6 +15,7 @@ class AccountScreen(ft.View):
 
         self.user = {}
         self.user_id = None
+        self.balance_text_display = ft.Text("0 VNĐ", color="white")
         self.dob_value = ""
         self.avatar_path = ""
         # Tạo vòng xoay chờ
@@ -36,20 +37,28 @@ class AccountScreen(ft.View):
     def load_account(self):
         try:
             result = ApiService.get_account_api(self.user_id)
-            print(f"--- DEBUG: Kết quả từ API sau khi cập nhật: {result} ---")
-
             if result.get("status") == "success":
                 self.user = result.get("data")
+                wallet_res = supabase.table("Wallet").select("Balance").eq("UserID", self.user_id).execute()
+                if wallet_res.data:
+                    current_balance = wallet_res.data[0].get("Balance", 0)
+                    self.balance_text_display.value = f"{current_balance:,.0f} VNĐ"
+                # ----------------------------------
+                self.dob_value = result.get("DateOfBirth") or ""
                 self.page.session.store.set("user_data", self.user)
 
-                # Cập nhật giá trị hiển thị cho các ô nhập nếu UI đã tồn tại
                 if hasattr(self, 'fullname_input'):
                     self.fullname_input.value = self.user.get("FullName", "")
                     self.email_input.value = self.user.get("Email", "")
-                    self.client_input.value = self.user.get("PhoneNumber", "")
-                    self.dob_input.value = self.user.get("DateOfBirth", "")
 
-                    # CẬP NHẬT ẢNH TẠI ĐÂY
+                    # Thử lấy PhoneNumber hoặc Phone
+                    self.client_input.value = self.user.get("PhoneNumber") or self.user.get("Phone") or ""
+
+                    # SỬA TẠI ĐÂY: Thử lấy DateOfBirth hoặc DOB
+                    self.dob_value = self.user.get("DateOfBirth") or self.user.get("DOB") or ""
+                    self.dob_input.value = self.dob_value
+
+                    # Cập nhật ảnh đại diện
                     default_avatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                     self.avatar_view.src = self.user.get("Avatar") or default_avatar
 
@@ -57,6 +66,7 @@ class AccountScreen(ft.View):
                 else:
                     self.build_ui()
                     self.page.update()
+            # ... (phần code lỗi giữ nguyên)
             else:
                 self.show_error_on_screen(result.get("message"))
         except Exception as e:
@@ -93,7 +103,40 @@ class AccountScreen(ft.View):
             keyboard_type=ft.KeyboardType.PHONE,
             prefix_icon=ft.Icons.PHONE,
         )
+        # Tạo nút Wallet với style đồng bộ
+        self.wallet_button = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, color="white"),
+                    ft.Text("My Wallet", color="white", weight=ft.FontWeight.BOLD),
+                    ft.VerticalDivider(width=10),
+                    self.balance_text_display,
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            bgcolor=ft.Colors.ORANGE_800,
+            padding=15,
+            border_radius=15,
+            on_click=lambda _: self.page.go("/Wallet"),  # Điều hướng sang trang ví
+        )
+        # Thêm nút Lịch sử giao dịch ngay dưới self.wallet_button
+        self.history_button = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.HISTORY_ROUNDED, color="white"),
+                    ft.Text("TransactionHistory", color="white", weight=ft.FontWeight.BOLD),
+                    ft.VerticalDivider(width=10),
+                    ft.Icon(ft.Icons.ARROW_FORWARD_IOS, color="white", size=12),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            bgcolor=ft.Colors.BLUE_GREY_700,  # Màu khác biệt để dễ phân biệt với nút Ví
+            padding=15,
+            border_radius=15,
+            on_click=lambda _: self.page.go("/TransactionHistory"),  # Gửi kèm tham số chuyển tab
+        )
 
+        # Nhớ thêm self.history_button vào danh sách controls của info_card
         self.dob_input = ft.TextField(
             label="Date of birth",
             value=self.dob_value,
@@ -240,7 +283,9 @@ class AccountScreen(ft.View):
                     self.email_input,
                     self.client_input,  # <-- Đã thêm vào đây
                     self.dob_input,
-
+                    self.wallet_button,
+                    self.history_button,
+                    ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
 
                     ft.Divider(),
 
@@ -282,13 +327,13 @@ class AccountScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
             ],
             on_change=self.on_nav_change,
         )
 
-        # ===== LAYOUT =====
+        # ===== LAYOUT TỐI ƯU =====
         self.controls = [
             ft.Row(
                 expand=True,
@@ -296,12 +341,20 @@ class AccountScreen(ft.View):
                 controls=[
                     ft.Container(
                         width=380,
+                        bgcolor=ft.Colors.WHITE,
                         content=ft.Column(
                             spacing=0,
                             controls=[
-                                header,
-                                info_card,
-                                ft.Container(expand=True),
+                                # PHẦN NỘI DUNG (Có thể cuộn)
+                                ft.Container(
+                                    content=ft.Column(
+                                        [header, info_card],
+                                        scroll=ft.ScrollMode.AUTO,  # Bật cuộn ở đây
+                                        spacing=0,
+                                    ),
+                                    expand=True,  # Chiếm toàn bộ diện tích còn lại
+                                ),
+                                # THANH ĐIỀU HƯỚNG (Cố định ở đáy)
                                 nav,
                             ],
                         ),
@@ -309,7 +362,6 @@ class AccountScreen(ft.View):
                 ],
             )
         ]
-
     # ===== UI HELPERS =====
     def card(self, content):
         return ft.Container(
@@ -391,27 +443,42 @@ class AccountScreen(ft.View):
 
     # ===== SAVE PROFILE =====
     def save_profile(self, e):
-        # Thu thập dữ liệu
+        # 1. Thu thập dữ liệu từ UI
         payload = {
             "user_id": self.user_id,
             "full_name": self.fullname_input.value,
             "email": self.email_input.value,
-            "client": self.client_input.value,
+            "phone": self.client_input.value,
             "dob": self.dob_input.value,
             "password": self.new_pw.value if self.new_pw.value else None
         }
 
-        # BƯỚC QUAN TRỌNG: Hiện thông báo THÀNH CÔNG NGAY LẬP TỨC
+        # 2. Hiện thông báo "Đang xử lý" hoặc "Thành công" trước để tạo cảm giác nhanh
         self.show_success_dialog()
 
-        # Gọi API chạy ngầm bằng Threading để UI không bị khựng (lag)
+        # 3. Định nghĩa hàm chạy ngầm
         import threading
-        def call_api_silent():
-            ApiService.update_account_api(payload)
+        def run_api_task():
+            try:
+                # Gửi dữ liệu qua ApiService (Đảm bảo hàm này gọi đúng Supabase)
+                ApiService.update_account_api(payload)
 
-        threading.Thread(target=call_api_silent, daemon=True).start()
+                # Cập nhật lại Session sau khi API chạy xong để đồng bộ
+                self.user.update({
+                    "FullName": payload["full_name"],
+                    "Email": payload["email"],
+                    "PhoneNumber": payload["phone"],
+                    "DateOfBirth": payload["dob"]
+                })
+                self.page.session.store.set("user_data", self.user)
+                print("--- DEBUG: Update Database & Session hoàn tất trong Thread ---")
+            except Exception as ex:
+                print(f"--- DEBUG: Lỗi chạy ngầm: {ex} ---")
 
-        # Reset các ô mật khẩu
+        # 4. Kích hoạt Thread
+        threading.Thread(target=run_api_task, daemon=True).start()
+
+        # 5. Reset UI mật khẩu
         self.new_pw.value = ""
         self.old_pw.value = ""
         self.page.update()
@@ -436,6 +503,7 @@ class AccountScreen(ft.View):
         self.user["PhoneNumber"] = self.client_input.value
         self.user["DateOfBirth"] = self.dob_input.value
 
+        self.dob_value = self.dob_input.value
         # 2. Lưu lại vào Session để các trang khác (như Dashboard) cũng thấy thay đổi
         self.page.session.store.set("user_data", self.user)
 

@@ -200,36 +200,47 @@ class WalletScreen(ft.View):
 
     # ================= LOAD WALLET =================
     def did_mount(self):
-        self.page.run_task(self.load_wallet, None)
+        # Thử lấy cả 2 key phổ biến bạn thường đặt
+        user_data = self.page.session.store.get("user_data") or self.page.session.store.get("user")
 
-    async def load_wallet(self, e):
-        user = self.page.session.store.get("user")
-        if not user:
-            return
+        if user_data:
+            # Gán ID tự động từ dữ liệu tìm thấy
+            self.user_id = user_data.get("UserID")
+            print(f"--- WALLET DEBUG: Đã nhận diện UserID: {self.user_id} ---")
 
-        self.user_id = user["UserID"]
-
-        result = supabase.table("User_Admin") \
-            .select("Balance, BankName") \
-            .eq("UserID", self.user_id) \
-            .single() \
-            .execute()
-
-        self.balance = result.data.get("Balance", 0)
-
-        bank_name = result.data.get("BankName")
-        if bank_name:
-            self.is_bank_linked = True
-            self.bank_status_text.value = f"Linked: {bank_name}"
-            self.bank_status_text.color = ft.Colors.GREEN
+            # Chạy hàm load ví
+            self.page.run_task(self.load_wallet)
         else:
-            self.is_bank_linked = False
-            self.bank_status_text.value = "Bank not yet linked"
-            self.bank_status_text.color = ft.Colors.RED
+            # Nếu vẫn trống, in ra toàn bộ session để kiểm tra tên key thực tế là gì
+            print(f"--- WALLET DEBUG: Session hiện tại: {self.page.session.store._data}")
+            print("--- WALLET DEBUG: Session trống, chuyển về Login ---")
+            self.page.go("/Login")
 
-        self.update_balance_text()
-        self.update()
+    async def load_wallet(self, e=None):
+        try:
+            # SỬA TÊN BẢNG: Thay "User_Admin" bằng tên bảng bạn thấy trong ảnh (ví dụ: "Wallet")
+            result = supabase.table("Wallet") \
+                .select("Balance") \
+                .eq("UserID", self.user_id) \
+                .execute()
 
+            if result.data:
+                record = result.data[0]
+                # Lấy tiền từ bảng Wallet
+                self.balance = float(record.get("Balance", 0))
+
+                print(f"--- WALLET DEBUG: Đã tìm thấy tiền ở bảng Wallet: {self.balance}")
+                self.update_balance_text()
+                self.update()
+            else:
+                # Nếu không tìm thấy trong bảng Wallet, có thể User này chưa có ví
+                print(f"--- WALLET DEBUG: User {self.user_id} chưa có bản ghi trong bảng Wallet")
+                self.balance = 0
+                self.update_balance_text()
+                self.update()
+
+        except Exception as ex:
+            print(f"--- WALLET DEBUG: Lỗi truy vấn bảng Wallet: {ex}")
     # ================= REFRESH BALANCE REALTIME =================
     def refresh_balance_from_db(self):
 

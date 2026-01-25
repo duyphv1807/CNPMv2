@@ -85,7 +85,11 @@ class VehicleBike(Vehicle):
 # --- PHẦN TEST (Sửa lỗi Type Hinting từ ảnh của bạn) ---
 if __name__ == "__main__":
     # 3. FIX LỖI "Expected type 'date', got 'str'":
+<<<<<<< HEAD
 # Chuyển chuỗi thành đối tượng date thực thụ
+=======
+    # Chuyển chuỗi thành đối tượng date thực thụ
+>>>>>>> 2443bfd022fff62c4f665e4d1b7696db2ca0d02c
     dob_obj = datetime.strptime("18/07/2000", "%d/%m/%Y").date()
 
     user1 = User("user_picar", "083222222222", dob_obj, "0377111111",
@@ -105,17 +109,31 @@ if __name__ == "__main__":
     # 5. FIX LỖI "Expected type 'User', got 'str'":
     # Truyền biến user1 (đối tượng), không phải chuỗi "user1"
     bike1 = VehicleBike(
+<<<<<<< HEAD
         brand="Asama Road Pro",
         color="White",
         rental_price=100000,
+=======
+        brand="Giant Escape 3",
+        color="Black",
+        rental_price=80000,
+>>>>>>> 2443bfd022fff62c4f665e4d1b7696db2ca0d02c
         rental_type="Daily",
         vehicle_document="BIKE_DOC_001",  # Giá trị này sẽ không bị nhầm vào status nữa
         status="Available",  # Đảm bảo giá trị này hợp lệ với logic trong Vehicle.py
         owner=user1,
+<<<<<<< HEAD
         image=r"D:\anh xe\OIP (3).webp",
         bike_type="CITY",
         frame_size="L",
         gear_system="Shimano",
+=======
+        image="giant.jpg",
+        bike_type="CITY",
+        frame_size="M",
+        gear_system="Shimano",
+        vehicle_id="BIKE_123"
+>>>>>>> 2443bfd022fff62c4f665e4d1b7696db2ca0d02c
     )
 
     # Lưu vào DB để kiểm tra logic
