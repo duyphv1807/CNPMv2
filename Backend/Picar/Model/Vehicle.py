@@ -107,34 +107,57 @@ class Vehicle:
             "Image": self.image
         }
 
-    def save_to_db(self):
+    def save_to_db(self, address_obj=None):
+        """
+        Lưu thông tin xe và địa chỉ vào Database.
+        address_obj: Đối tượng thuộc class VehicleAddress
+        """
         from Backend.Picar.ExcuteDatabase import upload_image_to_storage
-        if self._image:
-            # Đặt tên file theo VehicleID để tránh trùng lặp
+
+        # 1. Xử lý Upload ảnh (giữ nguyên logic của bạn)
+        if self.image:
             public_url = upload_image_to_storage(
-                image_source=self._image,
+                image_source=self.image,
                 filename=self._vehicle_id,
-                bucket="VehicleImages"  # Bạn nên tạo bucket tên 'Vehicles'
+                bucket="VehicleImages"
             )
             if public_url:
-                self._image_url = public_url
-            else:
-                print("⚠️ Cảnh báo: Không thể upload ảnh, xe sẽ không có hình hiển thị.")
+                self.image = public_url  # Cập nhật lại đường dẫn URL sau khi upload thành công
+
+        # 2. Lưu thông tin Vehicle vào bảng chính
         max_retries = 3
         attempts = 0
+        vehicle_saved = False
+        result = None
+
         while attempts < max_retries:
             try:
-                return supabase.table("Vehicle_Bike_Motorbike_Car_Truck_Boat").insert(self.to_dict()).execute()
+                # Thực hiện insert vào bảng Vehicle
+                result = supabase.table("Vehicle_Bike_Motorbike_Car_Truck_Boat").insert(self.to_dict()).execute()
+
+                if result.data:
+                    vehicle_saved = True
+                    print(f"✅ Đã lưu thông tin xe: {self._vehicle_id}")
+                    break
             except Exception as e:
                 if "duplicate key value" in str(e).lower() or "23505" in str(e):
-                    print(f"⚠️ Trùng mã {self._vehicle_id}, đang tạo mã mới...")
-                    # Tạo mã mới và thử lại
                     self._vehicle_id = generate_id("VE")
                     attempts += 1
                 else:
-                    # Nếu là lỗi khác (mất mạng, sai cột...) thì báo lỗi ngay
-                    print(f"❌ Lỗi Database: {e}")
+                    print(f"❌ Lỗi Database khi lưu Vehicle: {e}")
                     return None
+
+        # 3. GỌI LƯU ĐỊA CHỈ (Nếu xe đã lưu thành công và có đối tượng địa chỉ truyền vào)
+        if vehicle_saved and address_obj:
+            # Gọi hàm save_to_database của class Address và truyền VehicleID hiện tại
+            address_result = address_obj.save_to_database(vehicle_id=self._vehicle_id)
+
+            if address_result["status"] == "success":
+                print(f"✅ Đã lưu địa chỉ cho xe: {self._vehicle_id}")
+            else:
+                print(f"⚠️ Cảnh báo: Xe đã lưu nhưng lỗi lưu địa chỉ: {address_result['message']}")
+
+        return result
 
     def get_info(self):
         license_desc = self.LICENSE_TYPES.get(self._required_license, "Chưa xác định")
