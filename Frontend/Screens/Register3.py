@@ -184,7 +184,7 @@ class RegisterScreen3(ft.View):
 
             # 5. Xử lý phản hồi từ Server
             if result.get("status") == "success":
-                self.show_error_box([result.get("Thành công", "Chúc mừng bạn đăng kí thành công")])
+                self.show_error_box([result.get("Thành công", "Chúc mừng bạn đăng kí thành công!")])
                 self.page.session.store.clear()
                 self.page.update()
                 self.page.go("/Login")

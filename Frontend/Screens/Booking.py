@@ -14,9 +14,19 @@ class BookingScreen(ft.View):
         s_date_raw = page.session.store.get("start_date")
         e_date_raw = page.session.store.get("end_date")
         vehicle_data = page.session.store.get("selected_vehicle_data")
-        image_url = vehicle_data.get("Image") if vehicle_data else "link_anh_mac_dinh.jpg"
-        vehicle_name = f"{vehicle_data.get('Brand')} {vehicle_data.get('Model')}" if vehicle_data else "Tên xe"
-        location_vehicle = f"{page.session.store.get("location_name")}" if vehicle_data else "None"
+
+        if vehicle_data is None:
+            vehicle_data = {
+                "Brand": "VinFast", "Model": "VF8", "Category": "Car",
+                "FuelType": "Điện", "Transmission": "Số tự động",
+                "SeatingCapacity": 5, "RentalPrice": 1251000,
+                "Image": "https://picsum.photos/id/183/400/250"
+            }
+
+        image_url = vehicle_data.get("Image", "link_anh_mac_dinh.jpg")
+        vehicle_name = f"{vehicle_data.get('Brand')} {vehicle_data.get('Model')}"
+        location_vehicle = page.session.store.get("location_name") or "TP. Hồ Chí Minh"
+
         # Logic xử lý hiển thị ngày giờ
         if s_date_raw and e_date_raw:
             dt_start = datetime.fromisoformat(s_date_raw)
@@ -26,6 +36,45 @@ class BookingScreen(ft.View):
         else:
             start_display = "Chưa chọn"
             end_display = "Chưa chọn"
+
+        category = vehicle_data.get("Category", "Car")
+        fuel = vehicle_data.get("FuelType") or vehicle_data.get("EngineType") or "N/A"
+        transmission = vehicle_data.get("TransmissionType") or vehicle_data.get("Transmission") or "N/A"
+        seats = vehicle_data.get("SeatingCapacity") or vehicle_data.get("PassengerCapacity") or 0
+        price_val = vehicle_data.get("RentalPrice", 0)
+
+        specs_row = []
+        if category == "Bike":
+            specs_row = [
+                self.spec_item(ft.Icons.PEDAL_BIKE, "Xe đạp"),
+                self.spec_item(ft.Icons.LEADERBOARD, vehicle_data.get("Type", "Địa hình")),
+                self.spec_item(ft.Icons.SQUARE_FOOT, f"{vehicle_data.get('FrameSize', 'M')} size")
+            ]
+        elif category == "Truck":
+            load = vehicle_data.get("LoadCapacity", 0)
+            specs_row = [
+                self.spec_item(ft.Icons.LOCAL_SHIPPING, f"{load} tấn"),
+                self.spec_item(ft.Icons.SETTINGS, transmission),
+                self.spec_item(ft.Icons.LOCAL_GAS_STATION, fuel)
+            ]
+        else:  # Car, Motorbike, Boat
+            main_icon = ft.Icons.ELECTRIC_CAR if "Điện" in fuel else ft.Icons.LOCAL_GAS_STATION
+            specs_row = [
+                self.spec_item(main_icon, fuel),
+                self.spec_item(ft.Icons.SETTINGS if "Tự động" in transmission else ft.Icons.HANDYMAN, transmission),
+                self.spec_item(ft.Icons.CHAIR, f"{seats} ghế")
+            ]
+
+        self.temp = ft.Text("Quy định khác:\n"
+                            "- Sử dụng xe đúng mục đích.\n"
+                            "- Không sử dụng xe vào mục đích phi pháp, trái pháp luật.\n"
+                            "- Không sử dụng xe thuê để cầm đồ, thế chấp.\n"
+                            "- Không hút thuốc, nhả kẹo cao su, xả rác trong xe.\n"
+                            "- Không chở hàng quốc cấm, dễ cháy nổ.\n"
+                            "- Không chở hoa quả, thực phẩm nặng mùi trong xe.\n"
+                            "- Khi trả xe, nếu xe bẩn hoạc có mùi trong xe, khách hàng vui lòng vễ sinh xe hoặc gửi phụ thu phí vệ sinh xe.\n"
+                            "Trân trọng cảm ơn, chúc quý khách hàng có những chuyến đi tuyệt vời!"
+                            ,color="black", italic=True, size= 14)
 
         # --- FIXED TOP NAVIGATION ---
         self.nav_top = ft.Container(
@@ -125,29 +174,13 @@ class BookingScreen(ft.View):
                 self.section_header("Đặc điểm"),
                 ft.Container(
                     padding=ft.Padding(20, 0, 20, 15),
-                    content=ft.Row([
-                        self.spec_item(ft.Icons.ELECTRIC_CAR, "Điện"),
-                        self.spec_item(ft.Icons.SETTINGS, "Số tự động"),
-                        self.spec_item(ft.Icons.CHAIR, "5 ghế"),
-                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+                    content=ft.Row(specs_row, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
                 ),
 
                 # 6. Mô tả (Chủ xe viết)
                 self.section_header("Mô tả"),
                 ft.Container(padding=ft.Padding(20, 0, 20, 10),
-                             content=ft.Text("Xe mới, sạc đầy pin. Chủ xe nhiệt tình hỗ trợ 24/7.", size=13)),
-
-                # 7. Tiện nghi
-                self.section_header("Tiện nghi"),
-                ft.Container(
-                    padding=ft.Padding(20, 0, 20, 15),
-                    content=ft.Column([
-                        ft.Row([self.amenity_tag(ft.Icons.MAP, "Bản đồ"),
-                                self.amenity_tag(ft.Icons.BLUETOOTH, "Bluetooth")]),
-                        ft.Row([self.amenity_tag(ft.Icons.CAMERA_REAR, "Camera lùi"),
-                                self.amenity_tag(ft.Icons.USB, "Sạc USB")]),
-                    ], spacing=10)
-                ),
+                             content=ft.Text("Xe mới, sạc đầy pin. Chủ xe nhiệt tình hỗ trợ 24/7.", size=13,color = "black")),
 
                 # 8. Giấy tờ thuê
                 self.section_header("Giấy tờ thuê xe"),
@@ -162,11 +195,34 @@ class BookingScreen(ft.View):
                 # 9. Các mục trống (Điều khoản, Phụ phí, Hợp đồng, Chính sách hủy)
                 self.section_header("Điều khoản"),
                 ft.Container(padding=ft.Padding(20, 0, 20, 10),
-                             content=ft.Text("(Đang cập nhật...)", color="grey", italic=True)),
+                             content=self.temp),
 
                 self.section_header("Phụ phí phát sinh"),
-                ft.Container(padding=ft.Padding(20, 0, 20, 10),
-                             content=ft.Text("(Đang cập nhật...)", color="grey", italic=True)),
+                ft.Container(
+                    padding=ft.Padding(20, 0, 20, 15),
+                    content=ft.Column([
+                        self.fee_item(
+                            "Phí vượt giới hạn",
+                            "3.000đ /km",
+                            "Phụ phí phát sinh nếu di chuyển vượt quá 300 km khi thuê xe 1 ngày"
+                        ),
+                        self.fee_item(
+                            "Phí quá giờ",
+                            "100.000đ /giờ",
+                            "Phụ phí phát sinh nếu hoàn trả xe trễ giờ. Trường hợp trễ quá 5 giờ phụ phí thêm 1 ngày thuê"
+                        ),
+                        self.fee_item(
+                            "Phụ vệ sinh",
+                            "100.000đ",
+                            "Phụ phí phát sinh khi xe hoàn trả không đảm bảo vệ sinh(nhiều vết bẩn, bùn cát, sình lầy...)"
+                        ),
+                        self.fee_item(
+                            "Phí Khử mùi",
+                            "300.000đ,",
+                            "Phụ phí phát sinh khi xe hoàn trả bị ám mùi khó chịu(mùi thuốc lá, thực phẩm nặng mùi)"
+                        ),
+                    ], spacing=15)
+                ),
 
                 self.section_header("Hợp đồng"),
                 ft.Container(padding=ft.Padding(20, 0, 20, 10),
@@ -174,7 +230,7 @@ class BookingScreen(ft.View):
 
                 self.section_header("Chính sách hủy chuyến"),
                 ft.Container(padding=ft.Padding(20, 0, 20, 10),
-                             content=ft.Text("(Đang cập nhật...)", color="grey", italic=True)),
+                             content=ft.TextButton(ft.Text("Xem thêm >", color="black"), on_click=lambda _: page.go("/CancellationPolicy"))),
 
                 ft.Container(height=120)
             ]
@@ -243,7 +299,16 @@ class BookingScreen(ft.View):
         return ft.Row([ft.Icon(icon, size=18, color="black45"), ft.Text(label, size=12)], spacing=10, expand=True)
 
     def doc_item(self, icon, text):
-        return ft.Row([ft.Icon(icon, size=18, color="green"), ft.Text(text, size=13)], spacing=10)
+        return ft.Row([ft.Icon(icon, size=18, color="green"), ft.Text(text, size=13, color = "black")], spacing=10)
+
+    def fee_item(self, title, price, desc):
+        return ft.Column([
+            ft.Row([
+                ft.Text(title, size=14, weight=ft.FontWeight.W_500, color="black"),
+                ft.Text(price, size=14, weight=ft.FontWeight.BOLD, color="green")
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Text(desc, size=12, color="black",italic = True),
+        ], spacing=2)
 
 async def main(page: ft.Page):
     page.views.append(BookingScreen(page))

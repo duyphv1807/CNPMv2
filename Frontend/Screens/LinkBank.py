@@ -1,7 +1,6 @@
 import flet as ft
 from Backend.Picar.ExcuteDatabase import supabase
 
-
 class LinkBankScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(

@@ -1,7 +1,7 @@
 import flet as ft
 from Frontend.Style import COLORS, FONTS, PRIMARY_BUTTON_STYLE
 from Frontend.Services.APIService import ApiService
-
+import asyncio
 class LoginScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -140,6 +140,28 @@ class LoginScreen(ft.View):
         self.page.overlay.append(self.error_dialog)
         self.error_dialog.open = True
         self.page.update()
+    def show_message_box(self, error_messages):
+        # Tạo nội dung hiển thị: Đổi color sang WHITE để dễ đọc
+        content_list = ft.Column(
+            [ft.Text(f"• {msg}", color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.W_400) for msg in error_messages],
+            tight=True,
+            spacing=8
+        )
+
+        self.error_dialog = ft.AlertDialog(
+            modal=True,
+            # Title nên để màu sáng hoặc đỏ nhạt
+            title=ft.Row([
+                ft.Icon(ft.Icons.INFO_ROUNDED, color=ft.Colors.RED_400),
+                ft.Text("Thông báo", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ], spacing=10),
+            content=content_list,
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.page.overlay.append(self.error_dialog)
+        self.error_dialog.open = True
+        self.page.update()
 
     def _close_error(self):
         if hasattr(self, "error_dialog"):
@@ -176,9 +198,10 @@ class LoginScreen(ft.View):
                 # Lưu thông tin người dùng vào Session để các màn hình khác dùng chung
                 # (Không cần mật khẩu, chỉ cần FullName, Role, ID...)
                 self.page.session.store.set("user_data", user_data)
-
-                print(f"Đăng nhập thành công! Chào mừng {user_data.get('FullName')}")
-
+                errors.append("Đăng nhập thành công!")
+                mesages = []
+                self.show_message_box(errors)
+                await asyncio.sleep(1.5)
                 # Chuyển hướng sang màn hình chính
                 self.page.go("/Dashboard")
             else:
