@@ -1,7 +1,10 @@
 import requests
 
 # Địa chỉ IP của máy tính chạy Flask (Thay đổi theo IP máy bạn)
-SERVER_IP = "http://127.0.0.1:5000/api" #đoạn này có thể thay đổi
+
+SERVER_IP = "http://192.168.1.31:5000/api" #đoạn này có thể thay đổi
+
+
 BASE_URL = SERVER_IP
 class ApiService:
     @staticmethod
@@ -163,5 +166,47 @@ class ApiService:
             return {"status": "error", "message": "Yêu cầu quá thời hạn (Timeout)"}
         except requests.exceptions.ConnectionError:
             return {"status": "error", "message": "Không thể kết nối đến máy chủ"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def update_account_api(payload):
+        try:
+            url = f"{BASE_URL}/update_account"
+            # Đảm bảo payload gửi đi chứa đúng các key mà Backend mong đợi
+            # Frontend truyền: client -> Backend nhận: phone_number
+            formatted_payload = {
+                "user_id": payload.get("user_id"),
+                "full_name": payload.get("full_name"),
+                "email": payload.get("email"),
+                "phone_number": payload.get("phone"),  # Khớp với cột PhoneNumber
+                "dob": payload.get("dob"),
+                "password": payload.get("password")
+            }
+            response = requests.post(url, json=formatted_payload, timeout=10)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def get_account_api(user_id):
+        try:
+            url = f"{BASE_URL}/account"
+            # Gửi request lấy thông tin
+            response = requests.post(url, json={"user_id": user_id}, timeout=15)
+            result = response.json()
+
+            # DEBUG: In ra để kiểm tra Backend trả về đủ cột chưa
+            print(f"--- API DEBUG (Get Account): {result} ---")
+            return result
+        except Exception as e:
+            return {"status": "error", "message": f"Kết nối thất bại: {str(e)}"}
+    @staticmethod
+    def locate_api(use_coords, lat=None, lng=None):
+        try:
+            url = f"{BASE_URL}/get_location"
+            params = {"lat": lat, "lng": lng} if use_coords else {}
+            response = requests.get(url, params=params, timeout=10)
+            return response.json()
         except Exception as e:
             return {"status": "error", "message": str(e)}

@@ -1,12 +1,11 @@
 from flask import request, jsonify
 from Backend.Picar import app
-from .Services.LoginFunctional import login_logic
-from .Services.RegisterFunctional import register_logic
-from .Model.OTP import OTP
-from .Services.AuthService import AuthService
-from .Services.Location import locate_logic
-from .ExcuteDatabase import get_unique_filters
-from .Services.SearchFunctional import search_logic
+from Backend.Picar.ExcuteDatabase import supabase
+from Backend.Picar.Services.LoginFunctional import login_logic
+from Backend.Picar.Services.RegisterFunctional import register_logic
+from Backend.Picar.Model.OTP import OTP
+from Backend.Picar.Services.AuthService import AuthService
+
 @app.route("/api/login", methods=["POST"])
 def handle_login():
     try:
@@ -126,97 +125,63 @@ def handle_verify_otp():
             "message": "Lỗi hệ thống khi xác thực mã"
         }), 500
 
+#====== ACCOUNT SECTION ==========
 
-@app.route('/api/handle-locate', methods=['POST'])
-def handle_locate():
+# Tại Backend (Server)
+@app.route('/api/account', methods=['POST'])
+def get_account():
+    data = request.json
+    user_id = data.get("user_id")
+
+    # Dùng .select("*") để lấy hết tất cả các cột trong bảng User_Admin
+    result = supabase.table("User_Admin").select("*").eq("UserID", user_id).single().execute()
+
+    if result.data:
+        # Đảm bảo trả về đúng tên các trường mà Frontend đang mong đợi
+        return {
+            "status": "success",
+            "data": {
+                "UserID": result.data.get("UserID"),
+                "FullName": result.data.get("FullName"),
+                "Email": result.data.get("Email"),
+                "PhoneNumber": result.data.get("PhoneNumber"),  # THÊM DÒNG NÀY
+                "DateOfBirth": result.data.get("DateOfBirth"),  # DÙNG ĐÚNG TÊN NÀY
+                "Avatar": result.data.get("Avatar")
+            }
+        }
+    return {"status": "error", "message": "User not found"}
+
+
+@app.route('/api/update_account', methods=['POST'])
+def update_account():
     try:
-        # Lấy dữ liệu JSON từ request
         data = request.json
-        if not data:
-            return jsonify({"status": "error", "message": "No data provided"}), 400
+        user_id = data.get("user_id")
 
-        # Frontend gửi lên trạng thái cấp quyền và tọa độ
-        access = data.get('access')
-        lat = data.get('lat')
-        lng = data.get('lng')
+        # 1. Chuẩn bị dữ liệu để update
+        update_vals = {
+            "FullName": data.get("full_name"),
+            "Email": data.get("email"),
+            "PhoneNumber": data.get("phone_number"),
+        }
 
-        # Kiểm tra logic: Nếu có quyền truy cập nhưng thiếu tọa độ
-        if access and (lat is None or lng is None):
-            return jsonify({"status": "error", "message": "Missing coordinates"}), 400
-
-        # Gọi hàm xử lý trong Service Backend
-        result = locate_logic(access, lat, lng)
-
-        # Trả về kết quả thành công
-        return jsonify(result), 200
-
-    except Exception as e:
-        # Ghi log lỗi tại đây nếu cần (ví dụ: logging.error(str(e)))
-        return jsonify({
-            "status": "error",
-            "message": "Internal Server Error",
-            "details": str(e)  # Bạn có thể ẩn details này khi deploy thật để bảo mật
-        }), 500
-
-@app.route('/api/get-fillter', methods=['POST'])
-def get_fillter():
-    try:
-        # Gọi hàm xử lý logic để truy vấn Brand và Color duy nhất từ Supabase
-        result = get_unique_filters()
-
-        # Kiểm tra nếu hàm logic trả về trạng thái lỗi
-        if result.get("status") == "error":
-            return jsonify(result), 400
-
-        # Trả về dữ liệu filters (brands, colors) cho Frontend
-        return jsonify(result), 200
-
-    except Exception as e:
-        # Xử lý các lỗi phát sinh ngoài dự kiến của hệ thống
-        return jsonify({
-            "status": "error",
-            "message": "Internal Server Error",
-            "details": str(e)
-        }), 500
-
-
-def handle_search():
-    try:
-        # 1. Lấy toàn bộ dữ liệu JSON từ Frontend gửi lên
-        data = request.json
-
-        # Kiểm tra tính hợp lệ của dữ liệu đầu vào
-        if not data:
-            return jsonify({
-                "status": "error",
-                "message": "Không tìm thấy dữ liệu yêu cầu (Missing JSON body)"
-            }), 400
-
-        # 2. Bóc tách tọa độ người dùng và bộ lọc
-        # Lưu ý: Các key này phải khớp với key mà APIService.py gửi lên
-        u_lat = data.get("user_lat")
-        u_lng = data.get("user_lng")
-
-        # filters chứa các thông tin còn lại như brands, categories, details...
-        filters = data
-
-        # 3. Gọi hàm logic xử lý tìm kiếm chuyên sâu
-        # Truyền cả filters và cặp tọa độ để tính khoảng cách & match_score
-        result = search_logic(filters, u_lat, u_lng)
-
-        # 4. Phản hồi kết quả cho Frontend
-        if result.get("status") == "success":
-            # Trả về mã 200 kèm danh sách xe đã được sắp xếp
-            return jsonify(result), 200
+        # 2. Xử lý riêng cho DateOfBirth để tránh lỗi định dạng
+        dob_value = data.get("dob")
+        if dob_value and dob_value.strip() != "":
+            # Đảm bảo cột trong Supabase của bạn tên là 'DateOfBirth'
+            # (Kiểm tra lại trên Supabase Dashboard xem là DOB hay DateOfBirth)
+            update_vals["DateOfBirth"] = dob_value
         else:
-            # Trả về mã 500 nếu có lỗi trong quá trình truy vấn Supabase
-            return jsonify(result), 500
+            update_vals["DateOfBirth"] = None  # Gán NULL nếu trống
+
+        # 3. Thực hiện Update
+        result = supabase.table("User_Admin").update(update_vals).eq("UserID", user_id).execute()
+
+        if result.data:
+            return jsonify({"status": "success", "message": "Cập nhật thành công"}), 200
+        else:
+            return jsonify({"status": "error", "message": "Không tìm thấy User để cập nhật"}), 404
 
     except Exception as e:
-        # Bắt các lỗi hệ thống không lường trước
-        print(f"Lỗi Route handle_search: {str(e)}")
-        return jsonify({
-            "status": "error",
-            "message": "Lỗi máy chủ nội bộ",
-            "details": str(e)
-        }), 500
+        print(f"Lỗi Update Account: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500

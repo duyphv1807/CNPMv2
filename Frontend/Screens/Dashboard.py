@@ -58,7 +58,8 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
-            height=65
+            height=65,
+            on_change = self.on_nav_change
         )
 
         # 1. Header
@@ -193,6 +194,21 @@ class DashboardScreen(ft.View):
         self.update_product_list("Car")
 
     # --- HELPER METHODS ---
+    def on_nav_change(self, e):
+        # Lấy index của icon vừa bấm
+        index = e.control.selected_index
+
+        if index == 0:
+            self.page.go("/Dashboard")
+        elif index == 1:
+            self.page.go("/Chat")
+        elif index == 2:
+            self.page.go("/Trip")
+        elif index == 3:
+            self.page.go("/Support")
+        elif index == 4:
+            # Chuyển hướng sang route Account
+            self.page.go("/Account")
 
     def create_clickable_time_column(self, icon, label, text_obj):
         return ft.Column([
