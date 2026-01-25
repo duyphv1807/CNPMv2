@@ -8,6 +8,7 @@ from Frontend.Screens.ForgotPassword import ForgotPasswordScreen
 from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
 from Frontend.Screens.ChatScreen import ChatScreen
+from Screens.NotificationScreen import NotificationScreen
 
 
 async def main(page: ft.Page):
@@ -38,6 +39,8 @@ async def main(page: ft.Page):
             page.views.append(VerifyOTPScreen(page))
         elif page.route == "/ResetPassword":
             page.views.append(ResetPasswordScreen(page))
+        elif page.route == "/Notification":
+            page.views.append(NotificationScreen(page))
 
         # Luôn await khi update trong hàm async
         page.update()

@@ -5,7 +5,7 @@ class ChatScreen(ft.View):
     def __init__(self):
         super().__init__(
             route="/Chat",
-            bgcolor="#F5F6FA",
+            bgcolor="#E5E7EB",   # nền ngoài (desktop)
             padding=0
         )
 
@@ -13,21 +13,20 @@ class ChatScreen(ft.View):
         header = ft.Container(
             content=ft.Row(
                 [
-                    ft.TextButton(
-                        "← Quay lại",
-                        on_click=lambda e: self.page.go("/Dashboard"),
-                        style=ft.ButtonStyle(
-                            color="#2563EB"
-                        )
+                    ft.IconButton(
+                        icon=ft.Icons.ARROW_BACK_IOS_NEW,
+                        icon_size=18,
+                        on_click=lambda e: self.page.go("/Dashboard")
                     ),
                     ft.Text(
                         "Chat hỗ trợ",
-                        size=20,
+                        size=18,
                         weight=ft.FontWeight.BOLD,
                         color="#111827"
-                    )
+                    ),
+                    ft.Icon(ft.Icons.MORE_VERT)
                 ],
-                spacing=15
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             ),
             padding=15,
             bgcolor="white",
@@ -45,24 +44,22 @@ class ChatScreen(ft.View):
 
         chat_area = ft.Container(
             expand=True,
-            padding=20,
+            padding=16,
             content=self.chat_list
         )
 
         # ================= INPUT =================
         self.input_message = ft.TextField(
-    hint_text="Nhập tin nhắn...",
-    expand=True,
-    border_radius=25,
-    filled=True,
-    bgcolor="white",
-    text_size=14,
-    color="#111827",          
-    hint_style=ft.TextStyle(  
-        color="#9CA3AF"
-    )
-)
-
+            hint_text="Nhập tin nhắn...",
+            expand=True,
+            border_radius=25,
+            filled=True,
+            bgcolor="#F9FAFB",
+            text_size=14,
+            color="#111827",
+            hint_style=ft.TextStyle(color="#9CA3AF"),
+            border=ft.InputBorder.NONE
+        )
 
         send_button = ft.ElevatedButton(
             "Gửi",
@@ -79,20 +76,42 @@ class ChatScreen(ft.View):
                 [self.input_message, send_button],
                 spacing=10
             ),
-            padding=15,
+            padding=12,
             bgcolor="white",
             border=ft.border.only(
                 top=ft.BorderSide(1, "#E5E7EB")
             )
         )
 
+        # ================= MOBILE FRAME =================
+        mobile_frame = ft.Container(
+            width=420,                 # 👈 ép kiểu mobile
+            height=float("inf"),
+            bgcolor="white",
+            border_radius=16,
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+            content=ft.Column(
+                [
+                    header,
+                    chat_area,
+                    input_bar
+                ],
+                expand=True
+            )
+        )
+
+        # ================= CENTER =================
         self.controls = [
-            header,
-            chat_area,
-            input_bar
+            ft.Row(
+                [
+                    mobile_frame
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                expand=True
+            )
         ]
 
-        # ================= WELCOME MESSAGE =================
+        # ================= WELCOME =================
         self.add_bot_message("Xin chào 👋 Tôi có thể hỗ trợ gì cho bạn?")
 
     # ================= USER MESSAGE =================
@@ -103,13 +122,13 @@ class ChatScreen(ft.View):
                     ft.Container(
                         content=ft.Text(
                             text,
-                            color="#111827",              
+                            color="#111827",
                             weight=ft.FontWeight.W_600
                         ),
                         bgcolor="#E8F0FF",
                         padding=14,
                         border_radius=18,
-                        width=400
+                        width=300
                     )
                 ],
                 alignment=ft.MainAxisAlignment.END
@@ -124,13 +143,13 @@ class ChatScreen(ft.View):
                     ft.Container(
                         content=ft.Text(
                             text,
-                            color="#111827",              
+                            color="#111827",
                             weight=ft.FontWeight.W_500
                         ),
-                        bgcolor="white",
+                        bgcolor="#F3F4F6",
                         padding=14,
                         border_radius=18,
-                        width=400
+                        width=300
                     )
                 ],
                 alignment=ft.MainAxisAlignment.START
@@ -146,10 +165,13 @@ class ChatScreen(ft.View):
         self.add_user_message(text)
         self.input_message.value = ""
 
-        # Trả lời tự động (demo)
         self.add_bot_message("Cảm ơn bạn đã nhắn tin 😊")
-
         self.page.update()
-        
+# --- Chạy main ---
+async def main(page: ft.Page):
 
+    page.views.append(ChatScreen())
+    page.update()
 
+if __name__ == "__main__":
+    ft.run(main)

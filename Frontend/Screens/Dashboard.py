@@ -15,28 +15,54 @@ class DashboardScreen(ft.View):
         user_info = page.session.store.get("user_data")
         display_name = user_info["FullName"] if user_info else "Guest"
 
+        # --- KHÔI PHỤC DỮ LIỆU TỪ SESSION ---
+        saved_loc = page.session.store.get("location_name") or "TP. Hồ Chí Minh, Việt Nam"
+        s_date_raw = page.session.store.get("start_date")
+        e_date_raw = page.session.store.get("end_date")
+
+        self.start_date = datetime.fromisoformat(s_date_raw) if s_date_raw else datetime.now()
+        self.end_date = datetime.fromisoformat(e_date_raw) if e_date_raw else datetime.now() + timedelta(days=1)
+
         # --- STATE ---
         self.rental_mode = "self-driving"
         self.selected_category = "Car"
         self.category_buttons = {}
 
-        # KHỞI TẠO KHUNG HIỂN THỊ SẢN PHẨM (Nằm trong vùng cuộn riêng)
+        # --- OVERLAYS ---
+        self.geolocator = fg.Geolocator()
+        self.start_date_picker = ft.DatePicker(on_change=self.on_start_date_change, first_date=datetime.now())
+        self.end_date_picker = ft.DatePicker(on_change=self.on_end_date_change, first_date=datetime.now())
+        self.start_time_picker = ft.TimePicker(on_change=self.on_start_time_change)
+        self.end_time_picker = ft.TimePicker(on_change=self.on_end_time_change)
+
+        page.overlay.extend([self.geolocator, self.start_date_picker, self.end_date_picker, self.start_time_picker,
+                             self.end_time_picker])
+
+        self.location_text = ft.Text(saved_loc, size=14, weight=ft.FontWeight.BOLD, color="#333333")
         self.product_display = ft.Column(spacing=15)
+
+        # Text objects để cập nhật giao diện khi chọn ngày
+        self.txt_start_val = ft.Text(self.start_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
+                                     color="#333333")
+        self.txt_end_val = ft.Text(self.end_date.strftime("%d/%m/%Y"), size=14, weight=ft.FontWeight.BOLD,
+                                   color="#333333")
+
+        # KHỞI TẠO KHUNG HIỂN THỊ SẢN PHẨM (Nằm trong vùng cuộn riêng)
 
         # --- NAVIGATION BAR ---
         self.navigation_bar_custom = ft.NavigationBar(
             destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home", ),
+                ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED,label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
             height=65,
-            on_change=lambda e: self.on_nav_change(e)
-
+            on_change=self.on_nav_change
         )
+
 
         # 1. Header
         self.header = ft.Container(
@@ -76,7 +102,7 @@ class DashboardScreen(ft.View):
                                     content=self.create_info_row(ft.Icons.LOCATION_ON_OUTLINED, "Địa điểm",
                                                                  self.location_text),
                                     on_click=self.handle_location_click,
-                                    ink=True,
+                                    ink = True,
                                 ),
                                 # --- SỬA LỖI TẠI ĐÂY ---
                                 ft.Row([
@@ -90,7 +116,7 @@ class DashboardScreen(ft.View):
                                         expand=True,
                                         content=self.create_clickable_time_column(ft.Icons.LOGOUT_ROUNDED, "Ngày trả",
                                                                                   self.txt_end_val),
-                                        on_click=self.open_end_picker  # Đổi sang hàm helper
+on_click=self.open_end_picker  # Đổi sang hàm helper
                                     ),
                                 ], spacing=10),  # Đã đóng ngoặc vuông cho ft.Row
 
@@ -100,7 +126,7 @@ class DashboardScreen(ft.View):
                                     width=float("inf"), height=45,
                                     style=ft.ButtonStyle(bgcolor=COLORS["primary"],
                                                          shape=ft.RoundedRectangleBorder(radius=12)),
-                                    on_click=lambda _: print(f"Booking: {self.start_date} to {self.end_date}")
+                                    on_click=lambda _: self.page.go("/Search")
                                 )
                             ]
                         )
@@ -143,8 +169,7 @@ class DashboardScreen(ft.View):
                                 self.booking_card,
                                 ft.Container(
                                     padding=ft.Padding.only(left=25, bottom=10),
-                                    content=ft.Text("Danh mục xe", weight=ft.FontWeight.BOLD, size=16,
-                                                    color=COLORS["primary"]),
+                                    content=ft.Text("Danh mục xe", weight=ft.FontWeight.BOLD, size=16,color = COLORS["primary"]),
                                 ),
                                 self.category_section,
 
@@ -153,7 +178,7 @@ class DashboardScreen(ft.View):
                                     padding=ft.Padding.only(left=20, right=20, top=1, bottom=20),
                                     expand=True,  # Lấy phần diện tích còn lại
                                     content=ft.Column(
-                                        controls=[self.product_display],
+                                    controls=[self.product_display],
                                         scroll=ft.ScrollMode.AUTO,  # Chỉ cuộn trong vùng này
                                     )
                                 ),
@@ -175,31 +200,54 @@ class DashboardScreen(ft.View):
     def create_clickable_time_column(self, icon, label, text_obj):
         return ft.Column([
             ft.Row([ft.Icon(icon, size=16, color=COLORS["muted"]), ft.Text(label, color=COLORS["muted"], size=11)],
-                   spacing=5),
+                    spacing=5),
             text_obj,
             ft.Divider(height=1, color="#EEEEEE")
         ], spacing=2)
 
     def on_start_date_change(self, e):
         if self.start_date_picker.value:
-            self.start_date = self.start_date_picker.value
-            self.txt_start_val.value = self.start_date.strftime("%d/%m/%Y")
-            # Logic: Nếu ngày trả trước ngày nhận, tự nhảy ngày trả lên +1 ngày
+            d = self.start_date_picker.value
+            self.start_date = self.start_date.replace(year=d.year, month=d.month, day=d.day)
+            self.start_time_picker.open = True  # Tự động chọn giờ sau khi chọn ngày
+            self.page.update()
+
+    def on_start_time_change(self, e):
+        if self.start_time_picker.value:
+            t = self.start_time_picker.value
+            self.start_date = self.start_date.replace(hour=t.hour, minute=t.minute)
+
+            # Kiểm tra nếu ngày trả bị nhỏ hơn ngày nhận mới
             if self.end_date <= self.start_date:
-                self.end_date = self.start_date + timedelta(days=1)
-                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
+                self.end_date = self.start_date + timedelta(hours=2)  # Mặc định thuê ít nhất 2h
+                self.page.session.store.set("end_date", self.end_date.isoformat())
+                self.txt_end_val.value = self.end_date.strftime("%H:%M - %d/%m/%Y")
+
+            self.page.session.store.set("start_date", self.start_date.isoformat())
+            self.txt_start_val.value = self.start_date.strftime("%H:%M - %d/%m/%Y")
             self.page.update()
 
     def on_end_date_change(self, e):
         if self.end_date_picker.value:
-            # Kiểm tra không cho chọn ngày trả trước ngày nhận
-            if self.end_date_picker.value <= self.start_date:
-                self.page.snack_bar = ft.SnackBar(ft.Text("Ngày trả phải sau ngày nhận!"))
+            d = self.end_date_picker.value
+            self.end_date = self.end_date.replace(year=d.year, month=d.month, day=d.day)
+            self.end_time_picker.open = True
+            self.page.update()
+
+    def on_end_time_change(self, e):
+        if self.end_time_picker.value:
+            t = self.end_time_picker.value
+            temp_end = self.end_date.replace(hour=t.hour, minute=t.minute)
+
+            if temp_end <= self.start_date:
+                self.page.snack_bar = ft.SnackBar(ft.Text("Thời gian trả phải sau thời gian nhận!"))
                 self.page.snack_bar.open = True
             else:
-                self.end_date = self.end_date_picker.value
-                self.txt_end_val.value = self.end_date.strftime("%d/%m/%Y")
-            self.page.update()
+                self.end_date = temp_end
+                self.page.session.store.set("end_date", self.end_date.isoformat())
+                self.txt_end_val.value = self.end_date.strftime("%H:%M - %d/%m/%Y")
+                self.page.update()
+
 
     def create_mode_tab(self, text, mode, icon, active):
         is_left = (mode == "self-driving")
@@ -252,15 +300,15 @@ class DashboardScreen(ft.View):
             size=14,
             weight=ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400,
             color="black",
-            no_wrap=True,  # Đảm bảo chữ không bị xuống dòng làm hỏng layout
+            no_wrap=True, # Đảm bảo chữ không bị xuống dòng làm hỏng layout
         )
 
         btn = ft.Container(
             content=name_txt,
             padding=ft.Padding.symmetric(vertical=8, horizontal=12),
             border=ft.Border.all(1, "black" if is_selected else "#E0E0E0"),
-            border_radius=12,  # Bo góc mềm mại hơn một chút
-            bgcolor="white",
+            border_radius=12, # Bo góc mềm mại hơn một chút
+bgcolor="white",
             animate=ft.Animation(300, ft.AnimationCurve.DECELERATE),
             on_click=lambda _: self.select_category(name)
         )
@@ -278,20 +326,6 @@ class DashboardScreen(ft.View):
 
         self.update_product_list(name)
         self.page.update()
-
-    def on_nav_change(self, e):
-        index = e.control.selected_index
-
-        if index == 0:
-            e.page.go("/Dashboard")
-        elif index == 1:
-            e.page.go("/Chat")
-        elif index == 2:
-            e.page.go("/Trip")
-        elif index == 3:
-            e.page.go("/Support")
-        elif index == 4:
-            e.page.go("/Account")
 
     def update_product_list(self, category_name):
         products = {
@@ -339,22 +373,76 @@ class DashboardScreen(ft.View):
                         ], expand=True, spacing=4),
                         ft.IconButton(
                             icon=ft.Icons.ARROW_FORWARD_IOS,
-                            icon_size=14,
+icon_size=14,
                             icon_color="#CCCCCC"
                         )
                     ])
                 )
             )
 
+    def open_start_picker(self, e):
+        print("Đang mở lịch...")
+        self.start_date_picker.open = True
+        self.page.update()
+
+    def open_end_picker(self, e):
+        print("Đang mở lịch...")
+        self.end_date_picker.open = True
+        self.page.update()
+
+    async def handle_location_click(self, e):  # Thêm async ở đây
+        print(">>> Đang kích hoạt lấy vị trí...")
+        self.location_text.value = "Đang xin quyền GPS..."
+        self.page.update()
+
+        try:
+            # BẮT BUỘC: Phải có await để đợi phần cứng trả về tọa độ thực
+            pos = await self.geolocator.get_current_position()
+
+            if pos:
+                print(f">>> Đã lấy được tọa độ: {pos.latitude}, {pos.longitude}")
+
+                # Thực hiện nguyên tắc: Gọi API request lên Backend
+                # Nếu hàm locate_api của bạn cũng dùng requests (đồng bộ),
+                # bạn có thể gọi bình thường hoặc chuyển sang httpx để dùng async
+                result = ApiService.locate_api(True, pos.latitude, pos.longitude)
+
+                if result and result.get("status") == "success":
+                    addr = result.get("display_name")
+                    self.location_text.value = addr
+                    self.page.session.store.set("location_name",addr)
+                    self.location_text.color = "#333333"
+                else:
+                    self.location_text.value = "Server từ chối xử lý"
+            else:
+                self.location_text.value = "Không thể lấy tọa độ"
+
+        except Exception as ex:
+            print(f">>> Lỗi thực thi: {ex}")
+            self.location_text.value = "Lỗi truy cập vị trí"
+
+        self.page.update()
+    def on_nav_change(self, e):
+        index = e.control.selected_index
+
+        if index == 0:
+            self.page.go("/Dashboard")
+        elif index == 1:
+            self.page.go("/Chat")
+        elif index == 2:
+            self.page.go("/Trip")
+        elif index == 3:
+            self.page.go("/Notification")
+        elif index == 4:
+            self.page.go("/Account")
+
+
 
 # --- Chạy main ---
 async def main(page: ft.Page):
+
     page.views.append(DashboardScreen(page))
     page.update()
 
-
 if __name__ == "__main__":
     ft.run(main)
-
-
-git pull origin client-server --rebase
