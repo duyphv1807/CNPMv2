@@ -1,5 +1,5 @@
 import flet as ft
-from Frontend.Style import COLORS, FONTS
+from Frontend.Style import COLORS
 from Backend.Picar.ExcuteDatabase import supabase
 
 
@@ -139,47 +139,61 @@ class WalletScreen(ft.View):
                     ft.FilledButton(
                         "Bank Links",
                         width=220,
-                        on_click=lambda _: self.page.push_route("/LinkBank")
+                        on_click=lambda _: self.page.go("/LinkBank")
                     )
                 ]
             )
         )
 
         # ================= LAYOUT MOBILE =================
+        MAX_WIDTH = 420
+
         self.controls = [
-            ft.Stack(
+            ft.Column(
                 expand=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    # ===== BACK BUTTON =====
+
+                    # ================= HEADER =================
                     ft.Container(
-                        top=10,
-                        left=10,
-                        content=ft.TextButton(
-                            "← Come back",
-                            on_click=lambda _: self.page.push_route("/Account")
+                        width=float("inf"),
+                        padding=ft.padding.symmetric(vertical=10),
+                        content=ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            controls=[
+                                ft.Container(
+                                    width=MAX_WIDTH,
+                                    padding=ft.padding.symmetric(horizontal=12),
+                                    content=ft.Row(
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                                        controls=[
+                                            # ⬅ Back
+                                            ft.IconButton(
+                                                icon=ft.Icons.ARROW_BACK,
+                                                on_click=lambda _: self.page.go("/Account")
+                                            ),
+
+                                            # Title
+                                            ft.Text(
+                                                "MY WALLET",
+                                                size=22,
+                                                weight=ft.FontWeight.BOLD
+                                            ),
+
+                                            # Spacer cân layout
+                                            ft.Container(width=40)
+                                        ]
+                                    )
+                                )
+                            ]
                         )
                     ),
 
-                    # ===== MOBILE CENTER =====
-                    ft.Container(
-                        expand=True,
-                        alignment=ft.Alignment.CENTER,
-                        content=ft.Column(
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=22,
-                            controls=[
-                                ft.Text(
-                                    "MY WALLET",
-                                    size=FONTS["title"],
-                                    weight=ft.FontWeight.BOLD
-                                ),
-
-                                wallet_card,
-                                action_card,
-                                bank_card,
-                            ]
-                        )
-                    )
+                    # ================= CONTENT =================
+                    wallet_card,
+                    action_card,
+                    bank_card,
                 ]
             )
         ]
@@ -216,6 +230,23 @@ class WalletScreen(ft.View):
         self.update_balance_text()
         self.update()
 
+    # ================= REFRESH BALANCE REALTIME =================
+    def refresh_balance_from_db(self):
+
+        # Gọi lại DB để lấy balance mới nhất
+        # Đảm bảo Wallet realtime – KHÔNG tự cộng trừ
+        result = (
+            supabase.table("User_Admin")
+            .select("Balance")
+            .eq("UserID", self.user_id)
+            .single()
+            .execute()
+        )
+
+        if result.data:
+            self.balance = result.data["Balance"]
+            self.update_balance_text()
+            self.update()
     # ================= TIỆN ÍCH =================
     def update_balance_text(self):
         self.balance_text.value = (
@@ -250,20 +281,28 @@ class WalletScreen(ft.View):
             self.update()
             return
 
-        # Cộng tiền
-        self.balance += amount
+        # LẤY balance từ DB
+        result = (
+            supabase.table("User_Admin")
+            .select("Balance")
+            .eq("UserID", self.user_id)
+            .single()
+            .execute()
+        )
+
+        new_balance = result.data["Balance"] + amount
 
         # Update DB
         supabase.table("User_Admin").update(
-            {"Balance": self.balance}
+            {"Balance": new_balance}
         ).eq("UserID", self.user_id).execute()
 
-        # Reset UI
+        # REFRESH REALTIME
+        self.refresh_balance_from_db()
+
         self.amount_input.value = ""
         self.message_text.value = "Deposit successful"
         self.message_text.color = ft.Colors.GREEN
-        self.update_balance_text()
-        self.update()
 
     # ================= RÚT TIỀN =================
     async def withdraw_money(self):
@@ -273,22 +312,37 @@ class WalletScreen(ft.View):
             self.message_text.color = ft.Colors.RED
             self.update()
             return
+
         # Kiểm tra số tiền
         try:
             amount = int(self.amount_input.value)
-            if amount <= 0 or amount > self.balance:
+            if amount <= 0:
                 raise ValueError
         except:
             self.message_text.value = "Invalid amount"
             self.message_text.color = ft.Colors.RED
             self.update()
             return
-        # Trừ tiền
-        self.balance -= amount
+
+        result = (
+            supabase.table("User_Admin")
+            .select("Balance")
+            .eq("UserID", self.user_id)
+            .single()
+            .execute()
+        )
+
+        if amount > result.data["Balance"]:
+            self.message_text.value = "Insufficient balance"
+            self.message_text.color = ft.Colors.RED
+            self.update()
+            return
+
+        new_balance = result.data["Balance"] - amount
 
         # Update DB
         supabase.table("User_Admin").update(
-            {"Balance": self.balance}
+            {"Balance": new_balance}
         ).eq("UserID", self.user_id).execute()
 
         # Reset UI
@@ -301,11 +355,6 @@ class WalletScreen(ft.View):
 
 # ================= MAIN =================
 async def main(page: ft.Page):
-    # GIẢ LẬP MÀN HÌNH MOBILE
-    page.window_width = 420
-    page.window_height = 820
-    page.window_resizable = False
-
     page.views.append(WalletScreen(page))
     page.update()
 

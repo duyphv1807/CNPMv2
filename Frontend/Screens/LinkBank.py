@@ -67,67 +67,71 @@ class LinkBankScreen(ft.View):
                 color=ft.Colors.BLACK12,
                 offset=ft.Offset(0, 5)
             ),
-            content=ft.Column(
-                spacing=18,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            content=ft.Stack(
                 controls=[
-                    # ===== TITLE =====
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        controls=[
-                            ft.Icon(ft.Icons.ACCOUNT_BALANCE, size=30),
-                            ft.Text(
-                                "Liên kết ngân hàng",
-                                size=22,
-                                weight=ft.FontWeight.BOLD
-                            )
-                        ]
-                    ),
-
-                    ft.Text(
-                        "Vui lòng nhập thông tin ngân hàng để nạp / rút tiền",
-                        size=13,
-                        color=ft.Colors.GREY_600,
-                        text_align=ft.TextAlign.CENTER
-                    ),
-
-                    ft.Divider(),
-
-                    # ===== FORM TRONG 1 KHUNG =====
-                    form_box,
-
-                    ft.FilledButton(
-                        content=ft.Text("SAVE BANK"),
-                        width=300,
-                        height=46,
-                        on_click=self.save_bank
-                    ),
-
-                    self.message
-                ]
-            )
-        )
-
-        # ================= STACK LAYOUT =================
-        self.controls = [
-            ft.Stack(
-                expand=True,
-                controls=[
-                    # ===== CENTER CARD =====
+                    # ===== BACK BUTTON (TRONG KHUNG MOBILE) =====
                     ft.Container(
-                        alignment=ft.Alignment(0, 0),
-                        content=card
-                    ),
-
-                    # ===== BACK BUTTON GÓC TRÊN =====
-                    ft.Container(
-                        top=10,
-                        left=10,
+                        top=0,
+                        left=0,
                         content=ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
                             tooltip="Quay lại",
                             on_click=lambda e: self.page.push_route("/Wallet")
                         )
+                    ),
+
+                    # ===== NỘI DUNG CHÍNH =====
+                    ft.Container(
+                        margin=ft.margin.only(top=20),
+                        content=ft.Column(
+                            spacing=18,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                ft.Row(
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Icon(ft.Icons.ACCOUNT_BALANCE, size=30),
+                                        ft.Text(
+                                            "Liên kết ngân hàng",
+                                            size=22,
+                                            weight=ft.FontWeight.BOLD
+                                        )
+                                    ]
+                                ),
+
+                                ft.Text(
+                                    "Vui lòng nhập thông tin ngân hàng để nạp / rút tiền",
+                                    size=13,
+                                    color=ft.Colors.GREY_600,
+                                    text_align=ft.TextAlign.CENTER
+                                ),
+
+                                ft.Divider(),
+
+                                form_box,
+
+                                ft.FilledButton(
+                                    content=ft.Text("SAVE BANK"),
+                                    width=300,
+                                    height=46,
+                                    on_click=self.save_bank
+                                ),
+
+                                self.message
+                            ]
+                        )
+                    )
+                ]
+            )
+        )
+
+        self.controls = [
+            ft.Stack(
+                expand=True,
+                controls=[
+                    ft.Container(
+                        alignment=ft.Alignment(0, 0),
+                        content=card
                     )
                 ]
             )

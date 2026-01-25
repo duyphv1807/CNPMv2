@@ -1,7 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, PRIMARY_BUTTON_STYLE
 import asyncio
-import time
 from Frontend.Services.APIService import ApiService
 
 class VerifyOTPScreen(ft.View):
@@ -13,25 +12,7 @@ class VerifyOTPScreen(ft.View):
         )
         self.countdown_active = False
 
-        self.pin_fields = []
-        for _ in range(6):
-            field = ft.TextField(
-                value="",
-                text_align=ft.TextAlign.CENTER,
-                width=45,
-                height=55,
-                # TĂNG ĐỘ ĐẬM TẠI ĐÂY:
-                text_style=ft.TextStyle(
-                    size=20,
-                    weight=ft.FontWeight.BOLD,  # Ép kiểu đậm cho chữ số nhập vào
-                    color=ft.Colors.BLACK
-                ),
-                # TĂNG ĐỘ ĐẬM CHO VIỀN (Border) ĐỂ NHÌN RÕ HƠN
-                border_width=6,
-                focused_border_color=ft.Colors.BLUE_ACCENT,
-                # ... các thuộc tính khác
-            )
-            self.pin_fields.append(field)
+        self.pin_fields = [self._create_pin_field(i) for i in range(6)]
 
         self.contact_info_text = ft.Text(
             value="Đang tải thông tin...",  # Giá trị tạm thời
@@ -88,7 +69,7 @@ class VerifyOTPScreen(ft.View):
                                                 controls=[
                                                     self.countdown_text,
                                                     ft.TextButton(
-                                                        content=ft.Text("Resend", weight=ft.FontWeight.W_300,
+                                                        content=ft.Text("Resend", weight=ft.FontWeight.BOLD,
                                                                         color=COLORS["primary"], size=14),
                                                         on_click=self.resend_otp  # Đặt on_click ở đây mới đúng
                                                     ),
@@ -197,7 +178,7 @@ class VerifyOTPScreen(ft.View):
                 self.countdown_text.value = "Bạn có thể gửi lại mã ngay bây giờ"
                 self.countdown_text.color = COLORS["primary"]
                 self.countdown_text.opacity = 1.0
-                self.countdown_text.weight = ft.FontWeight.BOLD
+                self.countdown_text.weight = ft.FontWeight.NORMAL
 
             self.update()
             await asyncio.sleep(1)
