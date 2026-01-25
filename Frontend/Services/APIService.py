@@ -1,7 +1,9 @@
 import requests
 
 # Địa chỉ IP của máy tính chạy Flask (Thay đổi theo IP máy bạn)
+
 SERVER_IP = "http://192.168.1.31:5000/api" #đoạn này có thể thay đổi
+
 
 BASE_URL = SERVER_IP
 class ApiService:
@@ -164,5 +166,35 @@ class ApiService:
             return {"status": "error", "message": "Yêu cầu quá thời hạn (Timeout)"}
         except requests.exceptions.ConnectionError:
             return {"status": "error", "message": "Không thể kết nối đến máy chủ"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def update_account_api(payload):
+        try:
+            url = f"{BASE_URL}/update_account"
+            response = requests.post(url, json=payload, timeout=10)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def get_account_api(user_id):
+        try:
+            url = f"{BASE_URL}/account"
+            # Tăng timeout lên 10-15 giây để tránh lỗi 10054
+            response = requests.post(url, json={"user_id": user_id}, timeout=15)
+            return response.json()
+        except Exception as e:
+            return {"status": "error", "message": f"Kết nối thất bại: {str(e)}"}
+
+    # Hàm lấy địa chỉ từ tọa độ (Reverse Geocoding)
+    @staticmethod
+    def locate_api(use_coords, lat=None, lng=None):
+        try:
+            url = f"{BASE_URL}/get_location"
+            params = {"lat": lat, "lng": lng} if use_coords else {}
+            response = requests.get(url, params=params, timeout=10)
+            return response.json()
         except Exception as e:
             return {"status": "error", "message": str(e)}

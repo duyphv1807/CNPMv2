@@ -4,6 +4,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import bcrypt
+
+from Backend.Picar.ExcuteDatabase import supabase
 from Backend.Picar.Model.OTP import OTP
 
 class AuthService:
@@ -129,4 +131,55 @@ class AuthService:
         print("UPDATE RESULT:", result.data)
         return bool(result.data)
 
+    @staticmethod
+    async def get_user_by_id(user_id):
+        try:
+            # SỬA: Dùng bảng User_Admin và lấy đúng các cột
+            res = supabase.table("User_Admin") \
+                .select("UserID, FullName, Email, PhoneNumber, DateOfBirth, Avatar") \
+                .eq("UserID", user_id) \
+                .execute()
 
+            if not res.data or len(res.data) == 0:
+                return None
+            return res.data[0]
+        except Exception as e:
+            print(f"--- [ERROR get_user_by_id]: {str(e)}")
+            return None
+
+    #======== PHẦN FIX CẬP NHẬT TÀI KHOẢN ==============
+    @staticmethod
+    async def update_user(user_id, update_data):
+        try:
+            # SỬA QUAN TRỌNG: Đổi Users thành User_Admin để khớp với DB
+            response = supabase.table("User_Admin") \
+                .update(update_data) \
+                .eq("UserID", user_id) \
+                .execute()
+
+            if response.data:
+                print(f"--- [SUPABASE] Cập nhật thành công cho ID: {user_id} ---")
+                return True
+
+            print(f"--- [SUPABASE] Không tìm thấy dòng nào để update cho ID: {user_id} ---")
+            return False
+
+        except Exception as e:
+            # In ra lỗi chi tiết nếu tên cột sai (ví dụ: FullName vs Full_Name)
+            print(f"--- [SUPABASE ERROR]: {str(e)} ---")
+            return False
+
+    @staticmethod
+    async def update_user(user_id, update_data):
+        try:
+            from Backend.Picar.ExcuteDatabase import supabase
+            # Thực hiện update vào bảng User_Admin
+            response = supabase.table("User_Admin") \
+                .update(update_data) \
+                .eq("UserID", user_id) \
+                .execute()
+
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"--- [SUPABASE ERROR]: {str(e)} ---")
+            return False
