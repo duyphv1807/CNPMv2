@@ -76,7 +76,7 @@ class LinkBankScreen(ft.View):
                         content=ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
                             tooltip="Quay lại",
-                            on_click=lambda e: self.page.push_route("/Wallet")
+                            on_click=lambda e: self.page.go("/Wallet")
                         )
                     ),
 

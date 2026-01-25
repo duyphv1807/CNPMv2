@@ -109,7 +109,24 @@ class AccountScreen(ft.View):
             border_radius=15,
             on_click=lambda _: self.page.go("/Wallet"),  # Điều hướng sang trang ví
         )
+        # Thêm nút Lịch sử giao dịch ngay dưới self.wallet_button
+        self.history_button = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.HISTORY_ROUNDED, color="white"),
+                    ft.Text("TransactionHistory", color="white", weight=ft.FontWeight.BOLD),
+                    ft.VerticalDivider(width=10),
+                    ft.Icon(ft.Icons.ARROW_FORWARD_IOS, color="white", size=12),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            bgcolor=ft.Colors.BLUE_GREY_700,  # Màu khác biệt để dễ phân biệt với nút Ví
+            padding=15,
+            border_radius=15,
+            on_click=lambda _: self.page.go("/TransactionHistory"),  # Gửi kèm tham số chuyển tab
+        )
 
+        # Nhớ thêm self.history_button vào danh sách controls của info_card
         self.dob_input = ft.TextField(
             label="Date of birth",
             value=self.dob_value,
@@ -257,6 +274,7 @@ class AccountScreen(ft.View):
                     self.client_input,  # <-- Đã thêm vào đây
                     self.dob_input,
                     self.wallet_button,
+                    self.history_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
 
                     ft.Divider(),
