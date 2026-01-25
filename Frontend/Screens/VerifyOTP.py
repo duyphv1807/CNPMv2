@@ -1,7 +1,6 @@
 import flet as ft
 from Frontend.Style import COLORS, PRIMARY_BUTTON_STYLE
 import asyncio
-import time
 from Frontend.Services.APIService import ApiService
 
 class VerifyOTPScreen(ft.View):

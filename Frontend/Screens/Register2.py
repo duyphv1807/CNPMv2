@@ -40,7 +40,7 @@ class RegisterScreen2(ft.View):
                                 icon=ft.Icons.ARROW_BACK_IOS_NEW,
                                 icon_size=18,
                                 icon_color=COLORS["text"],
-                                on_click=lambda _: self.page.go("/Login")
+                                on_click=lambda _: self.page.go("/Register")
                             ),
                             alignment=ft.Alignment(-1, -1),
                             margin=ft.Margin.only(left=-10)

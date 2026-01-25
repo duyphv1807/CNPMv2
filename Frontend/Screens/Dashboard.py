@@ -397,11 +397,11 @@ class DashboardScreen(ft.View):
             pos = await self.geolocator.get_current_position()
 
             if pos:
-                print(f">>> Đã lấy được tọa độ: {pos.latitude}, {pos.longitude}")
+                self.page.session.store.set("loc_lat", pos.latitude)
+                self.page.session.store.set("loc_lng", pos.longitude)
 
-                # Thực hiện nguyên tắc: Gọi API request lên Backend
-                # Nếu hàm locate_api của bạn cũng dùng requests (đồng bộ),
-                # bạn có thể gọi bình thường hoặc chuyển sang httpx để dùng async
+                print(f">>> Đã lưu tọa độ vào Session: {pos.latitude}, {pos.longitude}")
+
                 result = ApiService.locate_api(True, pos.latitude, pos.longitude)
 
                 if result and result.get("status") == "success":

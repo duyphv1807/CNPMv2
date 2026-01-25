@@ -7,11 +7,23 @@ class VehicleMotorbike(Vehicle):
     ALLOWED_TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "SEMI-AUTOMATIC"]
 
     def __init__(self, brand: str, color: str, rental_price: float,
-                 vehicle_document: str, status: str, owner: User, image: str, engine_capacity: int,
-                 transmission_type: str, license_plate: str, vehicle_id: str = None):
+                 engine_capacity: int, transmission_type: str, license_plate: str,
+                 vehicle_document: str = None, status: str = "Available",
+                 owner: User = None, image: str = None,
+                 rental_type: str = "Daily", vehicle_id: str = None):
 
         # 1. Gọi hàm khởi tạo của class cha (Bắt buộc có owner)
-        super().__init__(brand, color, rental_price, vehicle_document, status, owner, image, vehicle_id)
+        super().__init__(
+            brand=brand,
+            color=color,
+            rental_price=rental_price,
+            rental_type=rental_type,
+            vehicle_document=vehicle_document,
+            status=status,
+            owner=owner,
+            image=image,
+            vehicle_id=vehicle_id
+        )
 
         # 2. Các thuộc tính (Sử dụng protected _)
         self._engine_capacity = engine_capacity
