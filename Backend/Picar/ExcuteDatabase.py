@@ -67,3 +67,32 @@ def get_current_user():
     except Exception as e:
         print(f"[ERROR] get_current_user: {e}")
         return None
+
+def get_unique_filters():
+    """
+    Truy vấn danh sách Brand và Color duy nhất từ database.
+    """
+    try:
+        res = (supabase.table("Vehicle_Bike_Motorbike_Car_Truck_Boat")
+               .select("Brand", "Color")
+               .execute())
+
+        if not res.data:
+            return {
+                "status": "success",
+                "brands": [],
+                "colors": []
+            }
+
+        # 3. Sử dụng set để lấy các giá trị duy nhất (Unique)
+        # Loại bỏ các giá trị None/Null nếu có trong database
+        brands = sorted(list(set(item["Brand"] for item in res.data if item.get("Brand"))))
+        colors = sorted(list(set(item["Color"] for item in res.data if item.get("Color"))))
+
+        return {
+            "status": "success",
+            "brands": brands,
+            "colors": colors
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

@@ -5,12 +5,13 @@ class VehicleBoat(Vehicle):
     # Danh sách các tùy chọn chuẩn cho tàu thuyền
     ALLOWED_ENGINES = ["OUTBOARD", "INBOARD", "JET", "SAIL"]
 
-    def __init__(self, brand: str, color: str, rental_price: float,
-                 vehicle_document: str, status: str, owner: User, image: str, length: float,
-                 engine_type: str, passenger_capacity: int, license_plate: str, vehicle_id: str = None):
+    def __init__(self, brand: str, color: str, rental_price: float, rental_type: str = "Daily",
+                 vehicle_document: str = None, status: str = "Available", owner: any = None,
+                 image: str = None, length: float = 0.0, engine_type: str = "Outboard",
+                 passenger_capacity: int = 0, license_plate: str = "", vehicle_id: str = None):
 
         # 1. Gọi hàm khởi tạo của class cha (Phải có owner)
-        super().__init__(brand, color, rental_price, vehicle_document, status, owner, image, vehicle_id)
+        super().__init__(brand, color, rental_price, rental_type, vehicle_document, status, owner, image, vehicle_id)
 
         # 2. Thuộc tính riêng (Sử dụng protected _ để đồng bộ)
         self._length = length

@@ -97,7 +97,7 @@ class WalletScreen(ft.View):
                         controls=[
                             ft.FilledButton(
                                 "Deposit",
-width=150,
+                                width=150,
                                 on_click=lambda e: self.page.run_task(self.deposit_money)
                             ),
                             ft.FilledButton(
@@ -175,7 +175,7 @@ width=150,
                                             ),
 
                                             # Title
-ft.Text(
+                                            ft.Text(
                                                 "MY WALLET",
                                                 size=22,
                                                 weight=ft.FontWeight.BOLD

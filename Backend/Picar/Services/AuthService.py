@@ -36,6 +36,7 @@ class AuthService:
         if not user_check.data:
             return False, "Tài khoản không tồn tại trên hệ thống!"
 
+
         # 5. Gửi OTP thật
         if is_email:
             return await AuthService.send_email_otp(contact, otp_code)
@@ -122,9 +123,10 @@ class AuthService:
 
         result = supabase.table("User_Admin") \
             .update({"Password": hashed}) \
-            .or_(f"Email.eq.{contact},PhoneNumber.eq.{contact}") \
+            .or_(f'Email.eq."{contact}",PhoneNumber.eq."{contact}"') \
             .execute()
 
+        print("UPDATE RESULT:", result.data)
         return bool(result.data)
 
 

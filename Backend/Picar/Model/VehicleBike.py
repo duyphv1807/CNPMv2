@@ -6,20 +6,23 @@ class VehicleBike(Vehicle):
     ALLOWED_TYPES = ["MOUNTAIN", "ROAD", "CITY", "ELECTRIC", "FOLDING"]
     ALLOWED_SIZES = ["XS", "S", "M", "L", "XL"]
 
-    def __init__(self, brand: str, color: str, rental_price: float,
-                 vehicle_document: str, status: str, owner: User, image: str,
-                 bike_type: str, frame_size: str, gear_system: str, vehicle_id: str = None):
+    class Bike(Vehicle):
+        def __init__(self, brand: str, color: str, rental_price: float, rental_type: str = "Daily",
+                     vehicle_document: str = None, status: str = "Available", owner: any = None,
+                     image: str = None, bike_type: str = "City", frame_size: str = "M",
+                     gear_system: str = "None", vehicle_id: str = None):
+            # Gọi hàm khởi tạo cha
+            super().__init__(brand, color, rental_price, rental_type, vehicle_document, status, owner, image,
+                             vehicle_id)
 
-        # 1. Gọi hàm khởi tạo của class cha (Vehicle) - Phải có thêm tham số owner
-        super().__init__(brand, color, rental_price, vehicle_document, status, owner, image, vehicle_id)
+            # Xe đạp mặc định không bằng lái và phân loại là Bike
+            self._required_license = "NONE"
+            self._classify_vehicle = "Bike"  # Rất quan trọng cho hàm search_logic
 
-        # 2. Xe đạp mặc định không yêu cầu bằng lái
-        self._required_license = "NONE"
-
-        # 3. Gán giá trị qua setter để kiểm tra logic
-        self.bike_type = bike_type
-        self.frame_size = frame_size
-        self.gear_system = gear_system
+            # Gán thuộc tính đặc thù
+            self.bike_type = bike_type
+            self.frame_size = frame_size
+            self.gear_system = gear_system
 
     # --- SETTER CHO BIKE TYPE ---
     @property

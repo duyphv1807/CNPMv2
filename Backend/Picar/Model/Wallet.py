@@ -1,5 +1,6 @@
 from Backend.Picar.ExcuteDatabase import supabase
 from Backend.Picar.Model.User import User
+from Backend.Picar.Model.Transaction import Transaction
 
 class Wallet:
     def __init__(self, owner: User, balance: int = 0, currency: str = "VNĐ"):
@@ -52,3 +53,73 @@ class Wallet:
             if "23505" in str(e):
                 print(f"❌ Lỗi: User {self._owner.user_id} đã sở hữu một ví rồi!")
             return None
+
+    # === Hàm Nạp tiền ===
+    def deposit(self, amount: int):
+        # Kiểm tra số tiền nạp phải lớn hơn 0
+        if amount <= 0:
+            return False, "Invalid amount"
+
+        # Cập nhật số dư trong object
+        balance_before = self._balance
+        balance_after = balance_before + int(amount)
+
+        try:
+            # Cập nhật số dư mới lên bảng Wallet
+            supabase.table("Wallet").update({
+                "Balance": balance_after
+            }).eq("UserID", self._owner.user_id).execute()
+
+            # Ghi lịch sử giao dịch (nạp tiền)
+            Transaction.create(
+                user_id=self._owner.user_id,
+                amount=amount,
+                tx_type="DEPOSIT",
+                balance_before=balance_before,
+                balance_after=balance_after,
+                note="User deposited money"
+            )
+
+            # Trả về thành công và số dư hiện tại
+            self._balance = balance_after
+            return True, balance_after
+
+        except Exception as e:
+            return False, str(e)
+
+    # === Hàm Rút tiền ===
+    def withdraw(self, amount: int):
+        # Kiểm tra số tiền rút phải lớn hơn 0
+        if amount <= 0:
+            return False, "Invalid amount"
+
+        # Kiểm tra số dư có đủ để rút không
+        if amount > self._balance:
+            return False, "Insufficient balance"
+
+        # Trừ tiền trong object
+        balance_before = self._balance
+        balance_after = balance_before - int(amount)
+
+        try:
+            # Cập nhật số dư mới lên bảng Wallet
+            supabase.table("Wallet").update({
+                "Balance": balance_after
+            }).eq("UserID", self._owner.user_id).execute()
+
+            # Ghi lịch sử giao dịch (rút tiền)
+            Transaction.create(
+                user_id=self._owner.user_id,
+                amount=amount,
+                tx_type="WITHDRAW",
+                balance_before=balance_before,
+                balance_after=balance_after,
+                note="User withdrew money"
+            )
+
+            # Trả về thành công và số dư hiện tại
+            self._balance = balance_after
+            return True, balance_after
+
+        except Exception as e:
+            return False, str(e)

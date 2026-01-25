@@ -90,6 +90,11 @@ class ResetPasswordScreen(ft.View):
         pwd = self.new_password.value
         confirm = self.confirm_password.value
 
+        if not self.page.session.store.get("otp_verified"):
+            self.show_snack("Bạn chưa xác thực OTP")
+            self.page.go("/Login")
+            return
+
         if not pwd or not confirm:
             self.show_snack("Vui lòng nhập đầy đủ mật khẩu")
             return
@@ -98,7 +103,8 @@ class ResetPasswordScreen(ft.View):
             self.show_snack("Mật khẩu xác nhận không khớp")
             return
 
-        contact = self.page.session.store.get("reset_contact")
+        contact = self.page.session.store.get("reset_email")
+
         if not contact:
             self.show_snack("Phiên đặt lại mật khẩu đã hết hạn")
             self.page.go("/ForgotPassword")
