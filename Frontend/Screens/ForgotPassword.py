@@ -128,7 +128,7 @@ class ForgotPasswordScreen(ft.View):
                 # 3. Lưu email vào session để trang /VerifyOTP biết cần xác thực cho ai
                 self.page.session.store.set("reset_email", account)
 
-                self.show_snack(f"Mã OTP đã được gửi tới {account}")
+                print(f"Mã OTP đã được gửi tới {account}")
                 # Chuyển trang ngay lập tức
                 self.page.go("/VerifyOTP")
             else:
@@ -138,7 +138,7 @@ class ForgotPasswordScreen(ft.View):
 
         except Exception as ex:
             print(f"Lỗi kết nối: {ex}")
-            self.show_snack("Lỗi kết nối dịch vụ! Vui lòng kiểm tra Wi-Fi/IP.")
+            print("Lỗi kết nối dịch vụ! Vui lòng kiểm tra Wi-Fi/IP.")
             self.reset_button_state()
 
     def reset_button_state(self):

@@ -69,7 +69,7 @@ class AccountScreen(ft.View):
         self.controls = [
             ft.Column([
                 ft.Icon(ft.Icons.ERROR_OUTLINE, color="red", size=50),
-                ft.Text(f"Lỗi kết nối: {msg}", color="red", weight="bold"),
+                ft.Text(f"Lỗi kết nối: {msg}", color="red", weight=ft.FontWeight.BOLD),
                 ft.ElevatedButton("Thử lại", on_click=lambda _: self.load_account())
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True)
         ]
@@ -548,12 +548,6 @@ class AccountScreen(ft.View):
     def on_nav_change(self, e):
         routes = ["/Dashboard", "/Chat", "/Trip", "/Notification", "/Account"]
         self.page.go(routes[e.control.selected_index])
-
-    # ===== TOAST =====
-    def show_error(self, msg):
-        self.page.snack_bar = ft.SnackBar(ft.Text(msg))
-        self.page.snack_bar.open = True
-        self.page.update()
 
     def show_success(self, msg):
         self.page.snack_bar = ft.SnackBar(ft.Text(msg))

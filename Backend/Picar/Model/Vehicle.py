@@ -17,7 +17,7 @@ class Vehicle:
     }
 
     def __init__(self, brand: str, color: str, rental_price: float,
-                 vehicle_document: str, status: str, owner: User, image: str, vehicle_id: str = None):
+                 vehicle_document: str, status: str, owner: User, image: str,rental_type: str = "Daily", vehicle_id: str = None):
 
         self._vehicle_id = vehicle_id if vehicle_id else generate_id("VE")
         self._owner = owner  # Lưu toàn bộ đối tượng User là chủ xe
@@ -25,6 +25,7 @@ class Vehicle:
         # Gán thông qua setter để kiểm tra logic
         self.brand = brand
         self.rental_price = rental_price
+        self.rental_type = rental_type
         self.status = status
         self.color = color
         self.vehicle_document = vehicle_document

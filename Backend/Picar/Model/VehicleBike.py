@@ -1,28 +1,36 @@
 from Backend.Picar.Model.Vehicle import Vehicle
 from Backend.Picar.Model.User import User
 
+
 class VehicleBike(Vehicle):
-    # Danh sách các tùy chọn chuẩn cho xe đạp
+    # Danh sách các tùy chọn chuẩn cho xe đạp (Hằng số)
     ALLOWED_TYPES = ["MOUNTAIN", "ROAD", "CITY", "ELECTRIC", "FOLDING"]
     ALLOWED_SIZES = ["XS", "S", "M", "L", "XL"]
 
-    class Bike(Vehicle):
-        def __init__(self, brand: str, color: str, rental_price: float, rental_type: str = "Daily",
-                     vehicle_document: str = None, status: str = "Available", owner: any = None,
-                     image: str = None, bike_type: str = "City", frame_size: str = "M",
-                     gear_system: str = "None", vehicle_id: str = None):
-            # Gọi hàm khởi tạo cha
-            super().__init__(brand, color, rental_price, rental_type, vehicle_document, status, owner, image,
-                             vehicle_id)
+    def __init__(self, brand: str, color: str, rental_price: float, rental_type: str = "Daily",
+                 vehicle_document: str = None, status: str = "Available", owner: any = None,
+                 image: str = None, bike_type: str = "CITY", frame_size: str = "M",
+                 gear_system: str = "None", vehicle_id: str = None):
 
-            # Xe đạp mặc định không bằng lái và phân loại là Bike
-            self._required_license = "NONE"
-            self._classify_vehicle = "Bike"  # Rất quan trọng cho hàm search_logic
+        # 1. Gọi hàm khởi tạo của lớp cha (Vehicle)
+        super().__init__(brand=brand,
+                         color=color,
+                         rental_price=rental_price,
+                         rental_type=rental_type,
+                         vehicle_document=vehicle_document,
+                         status=status,
+                         owner=owner,
+                         image=image,
+                         vehicle_id=vehicle_id)
 
-            # Gán thuộc tính đặc thù
-            self.bike_type = bike_type
-            self.frame_size = frame_size
-            self.gear_system = gear_system
+        # 2. Kiểm tra dữ liệu đầu vào (Validation)
+        if bike_type.upper() not in self.ALLOWED_TYPES:
+            raise ValueError(f"Loại xe không hợp lệ. Chọn từ: {self.ALLOWED_TYPES}")
+
+        # 3. Gán các thuộc tính riêng của xe đạp
+        self.bike_type = bike_type.upper()
+        self.frame_size = frame_size.upper()
+        self.gear_system = gear_system
 
     # --- SETTER CHO BIKE TYPE ---
     @property

@@ -25,17 +25,7 @@ class VehicleCar(Vehicle):
             image=image,
             vehicle_id=vehicle_id
         )
-        super().__init__(
-            brand=brand,
-            color=color,
-            rental_price=rental_price,
-            rental_type=rental_type,
-            vehicle_document=vehicle_document,
-            status=status,
-            owner=owner,
-            image=image,
-            vehicle_id=vehicle_id
-        )
+
         # 2. Thuộc tính riêng (Sử dụng protected _ để đồng bộ)
         self._model = model
         self._seating_capacity = seating_capacity
