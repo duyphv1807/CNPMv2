@@ -9,9 +9,8 @@ from Frontend.Screens.VerifyOTP import VerifyOTPScreen
 from Frontend.Screens.ResetPassword import ResetPasswordScreen
 from Frontend.Screens.ChatScreen import ChatScreen
 from Screens.NotificationScreen import NotificationScreen
-
-
 from Frontend.Screens.Search import SearchScreen
+
 
 async def main(page: ft.Page):
     page.title = "PiCar - Rental Vehicle System"
@@ -47,6 +46,7 @@ async def main(page: ft.Page):
 
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
+
 
         # Luôn await khi update trong hàm async
         page.update()

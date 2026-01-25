@@ -1,11 +1,8 @@
 import requests
 
 # Địa chỉ IP của máy tính chạy Flask (Thay đổi theo IP máy bạn)
-<<<<<<< HEAD
 SERVER_IP = "http://192.168.1.31:5000/api" #đoạn này có thể thay đổi
-=======
-SERVER_IP = "http://127.0.0.1:5000/api" #đoạn này có thể thay đổi
->>>>>>> e88cc2d7940320775f6c740604586e79f91f702c
+
 BASE_URL = SERVER_IP
 class ApiService:
     @staticmethod
