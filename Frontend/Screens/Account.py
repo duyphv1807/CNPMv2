@@ -15,6 +15,7 @@ class AccountScreen(ft.View):
 
         self.user = {}
         self.user_id = None
+        self.balance_text_display = ft.Text("0 VNĐ", color="white")
         self.dob_value = ""
         self.avatar_path = ""
         # Tạo vòng xoay chờ
@@ -38,6 +39,11 @@ class AccountScreen(ft.View):
             result = ApiService.get_account_api(self.user_id)
             if result.get("status") == "success":
                 self.user = result.get("data")
+                wallet_res = supabase.table("Wallet").select("Balance").eq("UserID", self.user_id).execute()
+                if wallet_res.data:
+                    current_balance = wallet_res.data[0].get("Balance", 0)
+                    self.balance_text_display.value = f"{current_balance:,.0f} VNĐ"
+                # ----------------------------------
                 self.dob_value = result.get("DateOfBirth") or ""
                 self.page.session.store.set("user_data", self.user)
 
@@ -104,7 +110,7 @@ class AccountScreen(ft.View):
                     ft.Icon(ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, color="white"),
                     ft.Text("My Wallet", color="white", weight=ft.FontWeight.BOLD),
                     ft.VerticalDivider(width=10),
-                    ft.Text("0.00 VNĐ", color="white"),  # Sau này có thể lấy từ API
+                    self.balance_text_display,
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
             ),

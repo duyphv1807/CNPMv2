@@ -18,13 +18,15 @@ class VehicleBike(Vehicle):
             brand=brand,
             color=color,
             rental_price=rental_price,
-            rental_type=rental_type,
             vehicle_document=vehicle_document,
             status=status,
             owner=owner,
             image=image,
             vehicle_id=vehicle_id
         )
+
+        # TỰ GÁN rental_type VÌ LỚP CHA KHÔNG NHẬN THAM SỐ NÀY
+        self.rental_type = rental_type
 
         self._required_license = "NONE"
         self._classify_vehicle = "BIKE"
