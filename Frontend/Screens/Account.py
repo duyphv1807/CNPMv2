@@ -93,6 +93,22 @@ class AccountScreen(ft.View):
             keyboard_type=ft.KeyboardType.PHONE,
             prefix_icon=ft.Icons.PHONE,
         )
+        # Tạo nút Wallet với style đồng bộ
+        self.wallet_button = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, color="white"),
+                    ft.Text("My Wallet", color="white", weight=ft.FontWeight.BOLD),
+                    ft.VerticalDivider(width=10),
+                    ft.Text("0.00 VNĐ", color="white"),  # Sau này có thể lấy từ API
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            bgcolor=ft.Colors.ORANGE_800,
+            padding=15,
+            border_radius=15,
+            on_click=lambda _: self.page.go("/Wallet"),  # Điều hướng sang trang ví
+        )
 
         self.dob_input = ft.TextField(
             label="Date of birth",
@@ -240,7 +256,8 @@ class AccountScreen(ft.View):
                     self.email_input,
                     self.client_input,  # <-- Đã thêm vào đây
                     self.dob_input,
-
+                    self.wallet_button,
+                    ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
 
                     ft.Divider(),
 
@@ -288,7 +305,7 @@ class AccountScreen(ft.View):
             on_change=self.on_nav_change,
         )
 
-        # ===== LAYOUT =====
+        # ===== LAYOUT TỐI ƯU =====
         self.controls = [
             ft.Row(
                 expand=True,
@@ -296,12 +313,20 @@ class AccountScreen(ft.View):
                 controls=[
                     ft.Container(
                         width=380,
+                        bgcolor=ft.Colors.WHITE,
                         content=ft.Column(
                             spacing=0,
                             controls=[
-                                header,
-                                info_card,
-                                ft.Container(expand=True),
+                                # PHẦN NỘI DUNG (Có thể cuộn)
+                                ft.Container(
+                                    content=ft.Column(
+                                        [header, info_card],
+                                        scroll=ft.ScrollMode.AUTO,  # Bật cuộn ở đây
+                                        spacing=0,
+                                    ),
+                                    expand=True,  # Chiếm toàn bộ diện tích còn lại
+                                ),
+                                # THANH ĐIỀU HƯỚNG (Cố định ở đáy)
                                 nav,
                             ],
                         ),
@@ -309,7 +334,6 @@ class AccountScreen(ft.View):
                 ],
             )
         ]
-
     # ===== UI HELPERS =====
     def card(self, content):
         return ft.Container(
