@@ -55,7 +55,7 @@ class DashboardScreen(ft.View):
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
                 ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
                 ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             selected_index=0,
@@ -196,22 +196,6 @@ class DashboardScreen(ft.View):
         self.update_product_list("Car")
 
     # --- HELPER METHODS ---
-    def on_nav_change(self, e):
-        # Lấy index của icon vừa bấm
-        index = e.control.selected_index
-
-        if index == 0:
-            self.page.go("/Dashboard")
-        elif index == 1:
-            self.page.go("/Chat")
-        elif index == 2:
-            self.page.go("/Trip")
-        elif index == 3:
-            self.page.go("/Support")
-        elif index == 4:
-            # Chuyển hướng sang route Account
-            self.page.go("/Account")
-
     def create_clickable_time_column(self, icon, label, text_obj):
         return ft.Column([
             ft.Row([ft.Icon(icon, size=16, color=COLORS["muted"]), ft.Text(label, color=COLORS["muted"], size=11)],

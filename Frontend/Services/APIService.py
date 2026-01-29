@@ -3,11 +3,6 @@ import requests
 # Địa chỉ IP của máy tính chạy Flask (Thay đổi theo IP máy bạn)
 
 SERVER_IP = "http://127.0.0.1:5000/api" #đoạn này có thể thay đổi
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 2443bfd022fff62c4f665e4d1b7696db2ca0d02c
 BASE_URL = SERVER_IP
 class ApiService:
     @staticmethod
@@ -204,12 +199,3 @@ class ApiService:
             return result
         except Exception as e:
             return {"status": "error", "message": f"Kết nối thất bại: {str(e)}"}
-    @staticmethod
-    def locate_api(use_coords, lat=None, lng=None):
-        try:
-            url = f"{BASE_URL}/get_location"
-            params = {"lat": lat, "lng": lng} if use_coords else {}
-            response = requests.get(url, params=params, timeout=10)
-            return response.json()
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
