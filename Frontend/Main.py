@@ -46,28 +46,19 @@ async def main(page: ft.Page):
             page.views.append(ResetPasswordScreen(page))
         elif page.route == "/Notification":
             page.views.append(NotificationScreen(page))
-        elif page.route == "/Account.py":
+        elif page.route == "/Account":
             page.views.append(AccountScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
-
-
-        elif page.route == "/Account":
-            page.views.append(AccountScreen(page))
-        elif page.route == "/Chat":
-            page.views.append(ChatScreen())
         elif page.route == "/Wallet":
             page.views.append(WalletScreen(page))
         elif page.route == "/LinkBank":
             page.views.append(LinkBankScreen(page))
         elif page.route == "/TransactionHistory":
             page.views.append(TransactionHistoryScreen(page))
-        elif page.route == "/Notification":
-            page.views.append(NotificationScreen(page))
-        elif page.route == "/Booking":
+        elif page.route == "/BookingScreen":
             page.views.append(BookingScreen(page))
-        elif page.route == "/Notification":
-            page.views.append(NotificationScreen(page))
+
         # Luôn await khi update trong hàm async
         page.update()
 
