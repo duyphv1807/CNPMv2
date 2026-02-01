@@ -4,7 +4,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import bcrypt
-
 from Backend.Picar.ExcuteDatabase import supabase
 from Backend.Picar.Model.OTP import OTP
 

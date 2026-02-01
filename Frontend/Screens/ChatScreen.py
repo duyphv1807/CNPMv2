@@ -16,11 +16,12 @@ class ChatScreen(ft.View):
                     ft.IconButton(
                         icon=ft.Icons.ARROW_BACK_IOS_NEW,
                         icon_size=18,
+                        icon_color = "black",
                         on_click=lambda e: self.page.go("/Dashboard")
                     ),
                     ft.Text(
-                        "Chat hỗ trợ",
-                        size=18,
+                        "Chat",
+                        size=20,
                         weight=ft.FontWeight.BOLD,
                         color="#111827"
                     ),
@@ -167,6 +168,7 @@ class ChatScreen(ft.View):
 
         self.add_bot_message("Cảm ơn bạn đã nhắn tin 😊")
         self.page.update()
+
 # --- Chạy main ---
 async def main(page: ft.Page):
 

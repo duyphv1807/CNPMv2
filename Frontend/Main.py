@@ -46,10 +46,12 @@ async def main(page: ft.Page):
             page.views.append(ResetPasswordScreen(page))
         elif page.route == "/Notification":
             page.views.append(NotificationScreen(page))
-        elif page.route == "/Account":
-            page.views.append(AccountScreen(page))
         elif page.route == "/Search":
             page.views.append(SearchScreen(page))
+        elif page.route == "/Account":
+            page.views.append(AccountScreen(page))
+        elif page.route == "/Chat":
+            page.views.append(ChatScreen())
         elif page.route == "/Wallet":
             page.views.append(WalletScreen(page))
         elif page.route == "/LinkBank":
@@ -67,5 +69,4 @@ async def main(page: ft.Page):
     await page.push_route("/Login")
 
 if __name__ == "__main__":
-    # Dùng ft.run để xóa cảnh báo Deprecated
     ft.run(main)

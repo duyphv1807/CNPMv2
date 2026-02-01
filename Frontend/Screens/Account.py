@@ -8,7 +8,6 @@ from Backend.Picar.ExcuteDatabase import supabase
 from Frontend.Services.APIService import ApiService
 from Frontend.Style import COLORS
 
-
 class AccountScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(route="/Account", bgcolor=ft.Colors.WHITE)
@@ -325,10 +324,10 @@ class AccountScreen(ft.View):
             height=65,
             destinations=[
                 ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
-                ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="Chat"),
+                ft.NavigationBarDestination(icon=ft.Icons.CHAT_BUBBLE_OUTLINE, label="Chat"),
                 ft.NavigationBarDestination(icon=ft.Icons.DIRECTIONS_CAR, label="Trip"),
-                ft.NavigationBarDestination(icon=ft.Icons.SUPPORT_AGENT, label="Support"),
-                ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="Account"),
+                ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS_OUTLINED, label="Notification"),
+                ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE, label="Account"),
             ],
             on_change=self.on_nav_change,
         )
@@ -507,9 +506,6 @@ class AccountScreen(ft.View):
         # 2. Lưu lại vào Session để các trang khác (như Dashboard) cũng thấy thay đổi
         self.page.session.store.set("user_data", self.user)
 
-        # 3. Cập nhật ngay lập tức tên hiển thị ở phần Header (phía trên ảnh đại diện)
-        # Trong build_ui, Header là Column nằm bên cạnh avatar.
-        # Chúng ta cần tìm đến Text đó để cập nhật:
         try:
             # Truy cập vào cấu trúc Row -> Column -> Text thứ 2 (tên người dùng)
             header_name_text = self.controls[0].controls[0].content.controls[0].controls[1].controls[1]
@@ -555,11 +551,11 @@ class AccountScreen(ft.View):
     def on_nav_change(self, e):
         routes = ["/Dashboard", "/Chat", "/Trip", "/Notification", "/Account"]
         self.page.go(routes[e.control.selected_index])
+
     def show_success(self, msg):
         self.page.snack_bar = ft.SnackBar(ft.Text(msg))
         self.page.snack_bar.open = True
         self.page.update()
-
 
 def main(page: ft.Page):
     page.views.append(AccountScreen(page))

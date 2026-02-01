@@ -2,7 +2,6 @@ import flet as ft
 from Frontend.Style import COLORS
 from Backend.Picar.ExcuteDatabase import supabase
 
-
 class WalletScreen(ft.View):
     def __init__(self, page: ft.Page):
         super().__init__(
@@ -131,7 +130,8 @@ class WalletScreen(ft.View):
                     ft.Text(
                         "Bank",
                         size=18,
-                        weight=ft.FontWeight.BOLD
+                        weight=ft.FontWeight.BOLD,
+                        color = "black"
                     ),
 
                     self.bank_status_text,
@@ -146,7 +146,7 @@ class WalletScreen(ft.View):
         )
 
         # ================= LAYOUT MOBILE =================
-        MAX_WIDTH = 420
+        MAX_WIDTH = 380
 
         self.controls = [
             ft.Column(
@@ -171,14 +171,16 @@ class WalletScreen(ft.View):
                                             # ⬅ Back
                                             ft.IconButton(
                                                 icon=ft.Icons.ARROW_BACK,
+                                                icon_color=COLORS["primary"],
                                                 on_click=lambda _: self.page.go("/Account")
                                             ),
 
                                             # Title
                                             ft.Text(
-                                                "MY WALLET",
-                                                size=22,
-                                                weight=ft.FontWeight.BOLD
+                                                "My wallet",
+                                                size=20,
+                                                weight=ft.FontWeight.BOLD,
+                                                color = COLORS["primary"],
                                             ),
 
                                             # Spacer cân layout
@@ -212,7 +214,6 @@ class WalletScreen(ft.View):
             self.page.run_task(self.load_wallet)
         else:
             # Nếu vẫn trống, in ra toàn bộ session để kiểm tra tên key thực tế là gì
-            print(f"--- WALLET DEBUG: Session hiện tại: {self.page.session.store._data}")
             print("--- WALLET DEBUG: Session trống, chuyển về Login ---")
             self.page.go("/Login")
 
